@@ -1,10 +1,15 @@
 import React from 'react';
+import { Card, CardContent } from "@/components/ui/card"
 import LoginForm from '../components/LoginForm';
 
 const LoginPage = () => {
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <LoginForm />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md mx-4">
+        <CardContent>
+          <LoginForm />
+        </CardContent>
+      </Card>
     </div>
   );
 };
