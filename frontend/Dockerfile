@@ -11,4 +11,5 @@ COPY . .
 EXPOSE 3000
 
 # --host is required so Vite listens on 0.0.0.0 inside Docker
-CMD ["npm", "run", "dev", "--", "--host"]
+# --no-open prevents trying to open browser in container
+CMD ["npm", "run", "dev", "--", "--host", "--no-open"]
