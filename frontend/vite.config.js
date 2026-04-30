@@ -9,6 +9,7 @@ export default defineConfig({
     open: true,
     strictPort: true,
     host: '0.0.0.0',
+    allowedHosts: ['odonto.moloeznik.me', '.moloeznik.me'],
     proxy: {
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001',
