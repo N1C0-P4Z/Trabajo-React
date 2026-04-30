@@ -1,6 +1,4 @@
-const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+const { verifyToken } = require('../utils/jwt');
 
 const authenticateToken = (req, res, next) => {
   // Get token from cookie
@@ -11,7 +9,7 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = verifyToken(token);
     req.user = decoded;
     next();
   } catch (error) {
@@ -22,4 +20,4 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-module.exports = { authenticateToken, JWT_SECRET };
+module.exports = { authenticateToken };
