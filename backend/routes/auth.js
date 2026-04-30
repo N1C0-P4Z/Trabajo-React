@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const db = require('../db/connection');
+const { prisma } = require('../prisma/client');
 const { JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
@@ -15,10 +15,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    // Find user by username (SQLite uses ? placeholder)
-    const user = db.prepare(
-      'SELECT id, username, password_hash FROM users WHERE username = ?'
-    ).get(username);
+    // Find user by username using Prisma
+    const user = await prisma.user.findUnique({
+      where: { username }
+    });
 
     // User not found
     if (!user) {
@@ -84,19 +84,17 @@ router.get('/me', async (req, res) => {
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Get fresh user data from database
-    const user = db.prepare(
-      'SELECT id, username FROM users WHERE id = ?'
-    ).get(decoded.userId);
+    // Get fresh user data from database using Prisma
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, username: true }
+    });
 
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    res.json({
-      id: user.id,
-      username: user.username
-    });
+    res.json(user);
 
   } catch (error) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {

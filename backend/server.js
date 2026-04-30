@@ -3,18 +3,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const fs = require('fs');
-const path = require('path');
 const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Ensure data directory exists
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
 
 // CORS configuration - allow frontend to send cookies
 app.use(cors({
@@ -59,5 +51,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`💾 Database: SQLite (./data/auth.db)`);
+  console.log(`💾 Database: PostgreSQL via Prisma`);
 });

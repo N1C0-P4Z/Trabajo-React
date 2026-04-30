@@ -1,0 +1,70 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: odonto_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: odontodb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: odonto_backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      JWT_SECRET: dev_jwt_secret_key_2024
+      JWT_EXPIRES_IN: 24h
+      FRONTEND_URL: http://localhost:3000
+      # URL para conectarse al servicio de Postgres dentro de la red Docker
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/odontodb?schema=public
+    ports:
+      - "3002:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Mount only source files (not node_modules from host)
+      - ./backend/server.js:/app/server.js
+      - ./backend/package.json:/app/package.json
+      - ./backend/package-lock.json:/app/package-lock.json
+      - ./backend/.env:/app/.env
+      - ./backend/routes:/app/routes
+      - ./backend/middleware:/app/middleware
+      - ./backend/prisma:/app/prisma
+      # Persist node_modules installed inside the container
+      - backend_node_modules:/app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: odonto_frontend
+    environment:
+      # URL del backend DENTRO de la red de Docker (usado por el proxy de Vite)
+      VITE_API_PROXY_TARGET: http://backend:3001
+    ports:
+      - "3003:3000"
+    depends_on:
+      - backend
+    volumes:
+      # Mount for live-reload during development
+      - ./frontend:/app
+      # Preserve container node_modules to avoid overwriting with host binaries
+      - frontend_node_modules:/app/node_modules
+
+volumes:
+  postgres_data:
+  backend_node_modules:
+  frontend_node_modules:
