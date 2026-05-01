@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,12 +39,12 @@ const LoginForm = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email / Username */}
         <div className="space-y-2">
-          <Label htmlFor="username" className="text-sm font-medium text-card-foreground">Usuario</Label>
+          <Label htmlFor="username" className="text-sm font-medium text-card-foreground">Usuario o Email</Label>
           <Input
             id="username"
             type="text"
             required
-            placeholder="admin"
+            placeholder="admin o admin@clinica.com"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             disabled={loading}
@@ -58,6 +59,7 @@ const LoginForm = () => {
             id="password"
             type="password"
             required
+            placeholder="secret123"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
@@ -85,6 +87,7 @@ const LoginForm = () => {
           type="button"
           variant="outline"
           className="w-full h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors"
+          onClick={() => window.location.href = '/register'}
         >
           ¿No tenés cuenta? Registrate
         </Button>

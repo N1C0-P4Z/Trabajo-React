@@ -3,12 +3,18 @@ const { generateToken, verifyToken } = require('../utils/jwt');
 const { userRepository } = require('../repositories/user.repository');
 
 const authService = {
-  async login(username, password) {
-    if (!username || !password) {
-      throw new Error('Username and password are required');
+  async login(credentials, password) {
+    if (!credentials || !password) {
+      throw new Error('Username/email and password are required');
     }
 
-    const user = await userRepository.findByUsername(username);
+    // Buscar por username O email
+    let user = await userRepository.findByUsername(credentials);
+    
+    if (!user) {
+      user = await userRepository.findByEmail(credentials);
+    }
+
     if (!user) {
       throw new Error('Invalid credentials');
     }
@@ -27,7 +33,11 @@ const authService = {
       token,
       user: {
         id: user.id,
-        username: user.username
+        username: user.username,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role
       }
     };
   },

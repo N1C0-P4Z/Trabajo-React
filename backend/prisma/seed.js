@@ -13,7 +13,12 @@ async function main() {
     await prisma.user.create({
       data: {
         username: 'admin',
-        password_hash: hash
+        email: 'admin@clinica.com',
+        first_name: 'Administrador',
+        last_name: 'Sistema',
+        phone: '+54 9 11 1234-5678',
+        password_hash: hash,
+        role: 'SUPER_ADMIN'
       }
     });
     console.log('Default user created: admin / secret123');
