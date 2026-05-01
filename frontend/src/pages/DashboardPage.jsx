@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
-import Header from '../components/Header';
 import ThemeToggle from '../components/ThemeToggle';
 
 const DashboardPage = () => {
@@ -8,28 +7,21 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
-
-      <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-end mb-6">
+      <header className="border-b bg-card px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">Bienvenido, {user?.first_name || user?.username}</p>
+          </div>
           <ThemeToggle />
         </div>
+      </header>
 
-        <div className="text-center">
-
-          <p className="mt-1 text-4xl font-extrabold text-foreground sm:text-5xl sm:tracking-tight lg:text-6xl">
-            ¡CHUPALA, {user?.username}!
+      <main className="px-6 py-6">
+        <div className="text-center py-36">
+          <p className="text-5xl text-muted-foreground">
+            Proximamente... CHUPALA
           </p>
-
-          <p className="mt-8 max-w-xl mx-auto text-xl text-muted-foreground">
-            Te has autenticado exitosamente usando JWT tokens almacenados en cookies httpOnly.
-          </p>
-
-          <div className="mt-8 flex justify-center space-x-4 text-sm text-muted-foreground">
-            <span>✓ Autenticación segura</span>
-            <span>✓ Cookies httpOnly</span>
-            <span>✓ Rutas protegidas</span>
-          </div>
         </div>
       </main>
     </div>

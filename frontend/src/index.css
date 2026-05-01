@@ -46,15 +46,6 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-
-    --sidebar: 0 0% 100%;               /* sidebar = blanco     */
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 221 83% 53%;
   }
 
   /* ─── Clinical Precision · Dark Mode ─── */
@@ -91,15 +82,6 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-
-    --sidebar: 240 20% 12%;            /* sidebar = fondo      */
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 15% 20%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 240 12% 25%;
-    --sidebar-ring: 221 83% 53%;
   }
 
   * {
