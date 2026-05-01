@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import ThemeToggle from './ThemeToggle';
 
 const LoginForm = () => {
   const [username, setUsername] = useState('');
@@ -9,89 +12,82 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!username.trim() || !password.trim()) {
       return;
     }
 
     try {
       await login(username, password);
-      // Successful login will update auth context
-      // ProtectedRoute will handle the redirect
     } catch (err) {
-      // Error is handled by auth context
       console.error('Login failed:', err);
     }
   };
 
   return (
-    <div>
-      <div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Demo: username "admin", password "secret123"
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-card-foreground">Iniciar Sesión</h2>
+        <ThemeToggle />
       </div>
-      
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-md shadow-sm -space-y-px">
-          <div>
-            <label htmlFor="username" className="sr-only">
-              Username
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
+      <p className="text-sm text-muted-foreground leading-relaxed -mt-3">
+        Ingresa tus credenciales para acceder a tu cuenta
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Email / Username */}
+        <div className="space-y-2">
+          <Label htmlFor="username" className="text-sm font-medium text-card-foreground">Usuario</Label>
+          <Input
+            id="username"
+            type="text"
+            required
+            placeholder="admin"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={loading}
+            className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
+          />
+        </div>
+
+        {/* Password */}
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-medium text-card-foreground">Contraseña</Label>
+          <Input
+            id="password"
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            className="h-9 bg-input border-border text-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
+          />
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  {error}
-                </h3>
-              </div>
-            </div>
+          <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-xl">
+            {error}
           </div>
         )}
 
-        <div>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </Button>
-        </div>
+        {/* Login button */}
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full h-9 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-medium transition-colors"
+        >
+          {loading ? 'Ingresando...' : 'Ingresar'}
+        </Button>
+
+        {/* No tenes cuenta, registrate! */}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors"
+        >
+          ¿No tenés cuenta? Registrate
+        </Button>
       </form>
     </div>
   );

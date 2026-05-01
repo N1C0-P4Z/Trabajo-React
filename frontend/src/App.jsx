@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -10,6 +11,10 @@ function App() {
 
   return (
     <Routes>
+      {/* Landing page - siempre accesible */}
+      <Route path="/" element={<LandingPage />} />
+
+      {/* Login */}
       <Route 
         path="/login" 
         element={
@@ -21,6 +26,7 @@ function App() {
         } 
       />
       
+      {/* Dashboard protegido */}
       <Route 
         path="/dashboard" 
         element={
@@ -30,26 +36,14 @@ function App() {
         } 
       />
       
-      {/* Redirect root to dashboard or login */}
-      <Route 
-        path="/" 
-        element={
-          isAuthenticated() ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        } 
-      />
-      
       {/* Catch all - 404 */}
       <Route 
         path="*" 
         element={
-          <div className="min-h-screen flex items-center justify-center">
+          <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-              <p className="text-gray-600">Page not found</p>
+              <h1 className="text-4xl font-bold mb-4">404</h1>
+              <p className="text-muted-foreground">Page not found</p>
             </div>
           </div>
         } 

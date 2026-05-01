@@ -13,26 +13,26 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow">
+    <header className="bg-card border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <h1 className="text-xl font-bold text-gray-900">
-              JWT Auth Demo
+            <h1 className="text-xl font-bold text-card-foreground">
+              Clínica Dental
             </h1>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {isAuthenticated() && user && (
               <>
-                <span className="text-sm text-gray-600">
-                  Welcome, <span className="font-medium text-gray-900">{user.username}</span>
+                <span className="text-sm text-muted-foreground">
+                  CHUPALA, <span className="font-medium text-card-foreground">{user.username}</span>
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-xl text-destructive-foreground bg-destructive hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  Logout
+                  Cerrar Sesión
                 </button>
               </>
             )}
