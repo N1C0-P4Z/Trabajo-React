@@ -1,6 +1,8 @@
-// Load .env only if critical env vars are not already set
-// In production (Coolify), env vars are set directly and .env file should not override them
-if (!process.env.DATABASE_URL) {
+// Load .env for local development only
+// In production (Coolify), env vars are set directly via container environment
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (!isProduction) {
   require('dotenv').config();
 }
 
@@ -10,6 +12,11 @@ const cookieParser = require('cookie-parser');
 const routes = require('./routes');
 
 const app = express();
+
+// Log CORS configuration for debugging
+console.log('🔧 CORS Configuration:');
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   FRONTEND_URL:', process.env.FRONTEND_URL);
 
 // CORS configuration - allow frontend to send cookies
 app.use(cors({
