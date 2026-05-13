@@ -1,4 +1,8 @@
-require('dotenv').config();
+// Load .env only if critical env vars are not already set
+// In production (Coolify), env vars are set directly and .env file should not override them
+if (!process.env.DATABASE_URL) {
+  require('dotenv').config();
+}
 
 const express = require('express');
 const cors = require('cors');
