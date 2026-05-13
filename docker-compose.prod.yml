@@ -31,8 +31,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # En prod solo levantamos el server, las migraciones se corren manualmente o en pre-deploy
-    command: ["node", "server.js"]
+
     restart: unless-stopped
     networks:
       - odonto-network
