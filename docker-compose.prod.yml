@@ -31,7 +31,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
+    ports:
+      - "3001:3001"
     restart: unless-stopped
     networks:
       - odonto-network
@@ -52,6 +53,8 @@ services:
       - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - backend
+    ports:
+      - "3000:3000"
     restart: unless-stopped
     networks:
       - odonto-network
