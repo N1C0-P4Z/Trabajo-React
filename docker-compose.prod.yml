@@ -1,71 +1,66 @@
-# Docker Compose para Producción (Coolify)
-# Este archivo está optimizado para despliegue en servidores de producción
-
 services:
   db:
     image: postgres:15-alpine
-    container_name: odonto_db_prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-odontodb}
     volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
       start_period: 30s
     restart: unless-stopped
     networks:
-      - odonto_network
+      - odonto-network
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: odonto_backend_prod
     environment:
       NODE_ENV: production
       PORT: 3001
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/odontodb?schema=public}
       FRONTEND_URL: ${FRONTEND_URL}
-    ports:
-      - "3001"
     depends_on:
       db:
         condition: service_healthy
-    # Coolify maneja el healthcheck automáticamente
+    # En prod solo levantamos el server, las migraciones se corren manualmente o en pre-deploy
+    command: ["node", "server.js"]
     restart: unless-stopped
     networks:
-      - odonto_network
+      - odonto-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: odonto_frontend_prod
+      args:
+        - VITE_API_URL=${VITE_API_URL}
     environment:
-      NODE_ENV: production
-      # URL completa del backend con /api/v1
-      # Ejemplo: https://x1457embctbo4ptjwnxspw1w.moloeznik.me/api/v1
-      VITE_API_URL: ${VITE_API_URL}
-    ports:
-      - "3000"
+      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - backend
-    # Coolify maneja el healthcheck automáticamente
     restart: unless-stopped
     networks:
-      - odonto_network
+      - odonto-network
+    # Coolify maneja el proxy y SSL automáticamente
 
 volumes:
-  postgres_data_prod:
-    driver: local
+  postgres_data:
 
 networks:
-  odonto_network:
+  odonto-network:
     driver: bridge
