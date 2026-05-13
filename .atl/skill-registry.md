@@ -8,11 +8,13 @@ See `_shared/skill-resolver.md` for the full resolution protocol.
 
 | Trigger | Skill | Path |
 |---------|-------|------|
-| Creating a pull request, opening a PR, or preparing changes for review | branch-pr | /home/martin/.config/opencode/skills/branch-pr/SKILL.md |
-| Creating a GitHub issue, reporting a bug, or requesting a feature | issue-creation | /home/martin/.config/opencode/skills/issue-creation/SKILL.md |
-| Writing Go tests, using teatest, or adding test coverage | go-testing | /home/martin/.config/opencode/skills/go-testing/SKILL.md |
-| When user says "judgment day", "judgment-day", "review adversarial", "dual review", "doble review", "juzgar", "que lo juzguen" | judgment-day | /home/martin/.config/opencode/skills/judgment-day/SKILL.md |
-| When user asks to create a new skill, add agent instructions, or document patterns for AI | skill-creator | /home/martin/.config/opencode/skills/skill-creator/SKILL.md |
+| Creating a pull request, opening a PR, or preparing changes for review | branch-pr | ~/.config/opencode/skills/branch-pr/SKILL.md |
+| PRs over 400 lines, stacked PRs, review slices | chained-pr | ~/.config/opencode/skills/chained-pr/SKILL.md |
+| Creating a GitHub issue, reporting a bug, or requesting a feature | issue-creation | ~/.config/opencode/skills/issue-creation/SKILL.md |
+| When user says "judgment day", "judgment-day", "review adversarial", "dual review", "doble review", "juzgar", "que lo juzguen" | judgment-day | ~/.config/opencode/skills/judgment-day/SKILL.md |
+| When user asks to create a new skill, add agent instructions, or document patterns for AI | skill-creator | ~/.config/opencode/skills/skill-creator/SKILL.md |
+| Updating the skill registry | skill-registry | ~/.claude/skills/skill-registry/SKILL.md |
+| Work-unit commits, commit splitting, chained PRs | work-unit-commits | ~/.config/opencode/skills/work-unit-commits/SKILL.md |
 
 ## Compact Rules
 
@@ -62,6 +64,24 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 
 | File | Path | Notes |
 |------|------|-------|
-| No project conventions found | — | No AGENTS.md, agents.md, .cursorrules, CLAUDE.md, or copilot-instructions.md detected |
+| AGENTS.md | /home/nicolas/Documentos/Trabajo-React/AGENTS.md | Main project context: stack, structure, API endpoints, Docker commands, architectural decisions |
+
+## SDD Compact Rules
+
+### General SDD Rules
+- Engram persistence mode (no openspec/ directory)
+- Strict TDD: DISABLED (no test runner detected)
+- All SDD saves use `capture_prompt: false` for automated artifacts
+- Use topic_key for evolving topics (upserts)
+- Always resolve memory conflicts with mem_judge after mem_save
+
+### Project-Specific Rules
+- Backend: CommonJS (`require`/`module.exports`)
+- Frontend: ESM (`import`/`export`)
+- API versioning: all routes under `/api/v1/`
+- Docker: never install packages on host, always use `docker compose exec`
+- Prisma: never import directly in controllers/routes, always use repository pattern
+- Error handling: always use `next(error)` in async controllers
+- shadcn/ui: use `npx shadcn add <component>` inside frontend container
 
 Read the convention files listed above for project-specific patterns and rules. All referenced paths have been extracted — no need to read index files to discover more.

@@ -18,6 +18,33 @@ const userService = {
 
     return await response.json();
   },
+
+  async getAll() {
+    const response = await fetch(API_URL, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al obtener usuarios');
+    }
+
+    return await response.json();
+  },
+
+  async deleteUser(id) {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al eliminar usuario');
+    }
+
+    return await response.json();
+  },
 };
 
 export default userService;

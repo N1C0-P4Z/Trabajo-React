@@ -40,12 +40,23 @@
     --input: 210 40% 96%;               /* #F1F5F9              */
     --ring: 221 83% 53%;                /* #2563EB              */
     --radius: 0.75rem;
+    --radius-sm: 0.25rem;
 
     --chart-1: 221 83% 53%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* ─── Sidebar (Light) ─── */
+    --sidebar-background: 210 40% 98%;       /* #F8FAFC – slate-50       */
+    --sidebar-foreground: 222 47% 11%;        /* #0F172A – slate-900      */
+    --sidebar-primary: 221 83% 53%;           /* #2563EB – azul primario  */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 94%;            /* #F1F5F9 – slate-100     */
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;            /* #E2E8F0 – slate-200     */
+    --sidebar-ring: 221 83% 53%;
   }
 
   /* ─── Clinical Precision · Dark Mode ─── */
@@ -82,6 +93,16 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* ─── Sidebar (Dark) ─── */
+    --sidebar-background: 240 18% 16%;        /* #23233A – ligeramente más claro que el fondo */
+    --sidebar-foreground: 210 40% 98%;         /* #F8FAFC */
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 12% 25%;             /* #38384A */
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 240 12% 25%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   * {
