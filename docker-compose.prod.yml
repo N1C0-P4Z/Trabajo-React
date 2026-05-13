@@ -36,8 +36,11 @@ services:
     restart: unless-stopped
     networks:
       - odonto-network
+    labels:
+      - "coolify.service=backend"
+      - "coolify.port=3001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/v1/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -58,6 +61,9 @@ services:
     restart: unless-stopped
     networks:
       - odonto-network
+    labels:
+      - "coolify.service=frontend"
+      - "coolify.port=3000"
     # Coolify maneja el proxy y SSL automáticamente
 
 volumes:
