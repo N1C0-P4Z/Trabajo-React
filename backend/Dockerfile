@@ -1,8 +1,8 @@
 FROM node:22-alpine
 WORKDIR /app
 
-# Install openssl (required by Prisma) and build tools for native deps
-RUN apk add --no-cache openssl libc6-compat
+# Install openssl (required by Prisma), curl for healthchecks, and build tools
+RUN apk add --no-cache openssl libc6-compat curl
 
 # Install dependencies first (better caching)
 COPY package*.json ./
