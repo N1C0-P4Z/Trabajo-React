@@ -1,25 +1,15 @@
-FROM node:22-alpine AS builder
-WORKDIR /app
-
-# Install dependencies
-COPY package*.json ./
-RUN npm install
-
-# Copy app source and build
-COPY . .
-RUN npm run build
-
-# Production stage with simple static server
 FROM node:22-alpine
 WORKDIR /app
 
-# Install serve
-RUN npm install -g serve
+# Install dependencies first (better caching)
+COPY package*.json ./
+RUN npm install
 
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist
+# Copy app source
+COPY . .
 
 EXPOSE 3000
 
-# Serve static files
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# --host is required so Vite listens on 0.0.0.0 inside Docker
+# --no-open prevents trying to open browser in container
+CMD ["npm", "run", "dev", "--", "--host", "--no-open"]
