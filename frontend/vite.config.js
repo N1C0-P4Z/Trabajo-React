@@ -7,6 +7,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // IMPORTANTE: Cambiar '/~dos/' por tu usuario antes de compilar para el servidor
+  // Ej: '/~uno/', '/~tres/', etc.
+  // Para desarrollo local dejar como '/' o usar VITE_BASE env var
+  base: process.env.VITE_BASE || '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -18,13 +22,6 @@ export default defineConfig({
     open: true,
     strictPort: true,
     host: '0.0.0.0',
-    allowedHosts: ['odonto.moloeznik.me', '.moloeznik.me'],
-    proxy: {
-      '/api': {
-        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001',
-        changeOrigin: true,
-      }
-    }
   },
   preview: {
     port: 3000,

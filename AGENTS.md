@@ -1,10 +1,12 @@
-# AGENTS.md - Contexto del Proyecto
+# AGENTS.md — Contexto del Proyecto
 
 ## 1. Qué es este proyecto
 
 Sistema de gestión para una **clínica odontológica** con autenticación JWT, registro de usuarios, y sidebar con navegación. La base técnica está lista para escalar a módulos de pacientes, doctores, citas, obras sociales y pagos.
 
 **Integrantes:** Nicolás Paz Reyes, Martin Moloeznik, Santiago Cañal.
+
+**Arquitectura:** Siguiendo la [Guía de Deploy Schujman 2026](./GUIA_SCHUJMAN_2026.pdf) — TypeScript compilado a CommonJS, SQLite, deploy por SCP + PM2.
 
 ---
 
@@ -16,118 +18,72 @@ Sistema de gestión para una **clínica odontológica** con autenticación JWT, 
 | | Vite | 5 |
 | | Tailwind CSS | v3 |
 | | React Router DOM | 6 |
-| | shadcn/ui | 4.6 (Radix + preset Mira) |
-| **Backend** | Node.js | 22 (Alpine en Docker) |
+| | shadcn/ui | 4.6 |
+| **Backend** | Node.js + TypeScript | 22 / 5.3 |
 | | Express | 4 |
 | | JWT (jsonwebtoken) | 9 |
 | | bcrypt | 5 |
 | | Prisma ORM | 5 |
-| **Database** | PostgreSQL | 15 (Alpine) |
-| **Infra** | Docker + Docker Compose | v3.8 |
+| **Database** | SQLite (archivo `prisma/dev.db`) | — |
+| **Deploy** | SCP + PM2 (sin Docker) | — |
 
 ---
 
 ## 3. Estructura de Directorios
 
-### Raíz del proyecto
 ```
 Trabajo-React/
-├── docker-compose.yml          # Stack completo: db + backend + frontend
-├── README.md                   # Instrucciones básicas y puertos
-├── AGENTS.md                   # Este archivo
-├── backend/
-│   ├── Dockerfile              # Node 22 Alpine + openssl para Prisma
-│   ├── .dockerignore
-│   ├── .env                    # Configuración local (no commitear)
-│   ├── .env.example            # Template de variables
-│   ├── package.json
-│   ├── server.js               # SOLO arranca el servidor (app.listen)
-│   ├── start.sh                # Orquesta: migrate → seed → server
+├── AGENTS.md
+├── GUIA_SCHUJMAN_2026.pdf       # Guía oficial de deploy
+├── servicios/                    # BACKEND — TypeScript → CommonJS
+│   ├── tsconfig.json            # module: commonjs, outDir: ./dist
+│   ├── package.json             # build: tsc, start: node dist/index.js
+│   ├── .env                     # Variables locales (no commitear)
+│   ├── .env.example
+│   ├── .gitignore
 │   ├── prisma/
-│   │   ├── schema.prisma       # Modelos de datos (User con Role enum)
-│   │   ├── seed.js             # Usuario admin por defecto
-│   │   └── migrations/         # Migraciones aplicadas
-│   └── src/
-│       ├── app.js              # Configuración Express (sin listen) + errores
-│       ├── config/
-│       │   └── database.js    # Exporta PrismaClient
-│       ├── controllers/
-│       │   ├── auth.controller.js
-│       │   └── user.controller.js
-│       ├── middlewares/
-│       │   └── auth.js         # authenticateToken (cookie-based)
-│       ├── repositories/
-│       │   └── user.repository.js
-│       ├── routes/
-│       │   ├── index.js        # Monta /api/v1
-│       │   └── v1/
-│       │       ├── index.js    # Agrupa rutas v1
-│       │       ├── auth.routes.js
-│       │       └── user.routes.js
-│       ├── services/
-│       │   ├── auth.service.js  # Login (username o email) + getUserFromToken
-│       │   └── user.service.js # Registro + CRUD + validaciones expandibles
-│       └── utils/
-│           ├── bcrypt.js        # Wrapper de bcrypt
-│           └── jwt.js          # generateToken / verifyToken
+│   │   ├── schema.prisma        # provider: sqlite, User model
+│   │   ├── seed.js              # Usuario admin por defecto
+│   │   ├── dev.db               # Base SQLite (generada, gitignored)
+│   │   └── migrations/          # Migraciones Prisma
+│   ├── src/                     # Código fuente TypeScript
+│   │   ├── index.ts             # Entry point: app.listen(3001, '0.0.0.0')
+│   │   ├── app.ts               # Express config, CORS, error handler
+│   │   ├── config/database.ts   # PrismaClient (import CommonJS pattern)
+│   │   ├── controllers/         # auth.controller.ts, user.controller.ts
+│   │   ├── middlewares/auth.ts  # authenticateToken (cookie-based)
+│   │   ├── repositories/user.repository.ts
+│   │   ├── routes/              # index.ts → v1/ (auth, users)
+│   │   ├── services/            # auth.service.ts, user.service.ts
+│   │   └── utils/               # bcrypt.ts, jwt.ts
+│   └── dist/                    # JS compilado (npm run build → SCP)
 └── frontend/
-    ├── Dockerfile              # Node 22 Alpine
-    ├── .dockerignore
-    ├── jsconfig.json           # Alias @/ para imports
     ├── package.json
-    ├── vite.config.js          # Puerto 3000, host 0.0.0.0, proxy /api, alias @/
-    ├── tailwind.config.js      # Extendido con colores de shadcn/ui
-    ├── postcss.config.js
-    ├── components.json         # Configuración de shadcn/ui
+    ├── vite.config.js           # base: env VITE_BASE (default /)
+    ├── tailwind.config.js
+    ├── index.html
     └── src/
-        ├── App.jsx              # Routes con Sidebar shadcn
-        ├── main.jsx             # Providers: Theme, Auth, Tooltip
-        ├── index.css            # Variables CSS tema Clinical Precision
-        ├── contexts/
-        │   ├── AuthContext.jsx
-        │   └── ThemeContext.jsx
-        ├── hooks/
-        │   └── useAuth.js
-        ├── lib/
-        │   └── utils.js         # Helper cn() para shadcn/ui
+        ├── main.jsx             # BrowserRouter con basename dinámico
+        ├── App.jsx              # Routes + Sidebar
         ├── services/
-        │   ├── authService.js   # Cliente HTTP: /api/v1/auth/...
-        │   └── userService.js    # Cliente HTTP: /api/v1/users
-        ├── components/
-        │   ├── ui/              # Componentes de shadcn/ui
-        │   │   ├── button.jsx
-        │   │   ├── card.jsx
-        │   │   ├── input.jsx
-        │   │   ├── label.jsx
-        │   │   ├── avatar.jsx
-        │   │   ├── separator.jsx
-        │   │   ├── sheet.jsx
-        │   │   ├── sidebar.jsx   # Componente nativo shadcn
-        │   │   └── tooltip.jsx
-        │   ├── AppSidebar.jsx   # Sidebar con menú + cerrar sesión
-        │   ├── ThemeToggle.jsx  # Botón luz/luna
-        │   ├── LoginForm.jsx
-        │   ├── RegisterForm.jsx
-        │   └── ProtectedRoute.jsx
-        └── pages/
-            ├── LandingPage.jsx
-            ├── LoginPage.jsx
-            ├── RegisterPage.jsx
-            └── DashboardPage.jsx
+        │   ├── apiConfig.js     # API_BASE auto-detect (local vs server)
+        │   ├── authService.js
+        │   └── userService.js
+        ├── components/          # AppSidebar, LoginForm, RegisterForm, etc.
+        ├── contexts/            # AuthContext, ThemeContext
+        ├── hooks/               # useAuth, use-mobile
+        ├── lib/utils.js         # cn() helper
+        └── pages/               # Landing, Login, Register, Dashboard
 ```
 
 ---
 
-## 4. Modelo de Datos (Prisma)
+## 4. Modelo de Datos (Prisma + SQLite)
 
-### User Model
 ```prisma
-enum Role {
-  SUPER_ADMIN
-  OWNER
-  DENTIST
-  SECRETARY
-  PATIENT
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -136,173 +92,170 @@ model User {
   email         String   @unique
   first_name    String
   last_name     String
-  phone         String   // Required, formato argentino
+  phone         String
   password_hash String
-  role          Role     @default(PATIENT)
+  role          String   @default("PATIENT")  // SUPER_ADMIN, OWNER, DENTIST, SECRETARY, PATIENT
   created_at    DateTime @default(now())
 }
 ```
+
+**Nota:** SQLite no tiene enum nativo — Prisma lo maneja como String con validación en cliente.
 
 ---
 
 ## 5. API Endpoints
 
-### Auth (/api/v1/auth)
+El backend escucha en `0.0.0.0:3001` sin prefijo `/api` (el proxy inverso del servidor agrega `/~USUARIO/api`).
+
+### Auth (`/v1/auth`)
 | Método | Endpoint | Descripción |
 |---|---|---|
 | POST | /login | Login con username o email + password |
 | POST | /logout | Cerrar sesión (limpia cookie) |
 | GET | /me | Obtener usuario actual desde cookie JWT |
 
-### Users (/api/v1/users)
+### Users (`/v1/users`)
 | Método | Endpoint | Descripción |
 |---|---|---|
 | POST | / | Registrar nuevo usuario |
-| GET | / | Listar todos los usuarios (solo admin) |
+| GET | / | Listar todos los usuarios |
 | GET | /:id | Obtener usuario por ID |
 | PUT | /:id | Actualizar usuario |
 | DELETE | /:id | Eliminar usuario |
 
 ---
 
-## 6. Validaciones Expandibles (Backend)
+## 6. API_BASE — Detección Automática (Frontend)
 
-### Teléfono (Argentina)
 ```js
-// backend/src/services/user.service.js
-const countryPhoneValidators = {
-  AR: {
-    regex: /^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/,
-    message: 'Formato argentino inválido. Ej: +54 9 11 1234-5678'
-  }
-  // Para agregar Uruguay u otros países:
-  // UY: { regex: /^\+?598.../, message: '...' }
-};
+// frontend/src/services/apiConfig.js
+export const API_BASE = window.location.pathname.startsWith('/~')
+  ? `/${window.location.pathname.split('/')[1]}/api`
+  : 'http://localhost:3001';
 ```
 
-### Email
-- Validación general RFC-like: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-- Expandible para validar dominios específicos en el futuro
-
-### Errores HTTP
-- `400` — Validaciones fallidas (campos requeridos, formato)
-- `401` — Credenciales inválidas
-- `409` — Conflicto (username/email/teléfono ya existe)
-- `404` — Usuario no encontrado
+- **Local:** `API_BASE` = `http://localhost:3001`
+- **Servidor:** `API_BASE` = `/~dos/api` (detecta el `~USUARIO` automáticamente)
+- Todas las llamadas usan: `fetch(\`${API_BASE}/v1/...\`)` con `credentials: 'include'`
 
 ---
 
-## 7. Comandos Docker Clave
+## 7. Autenticación: Cookies HTTP-only
 
-### Levantar todo el stack
+- Token JWT en cookie `httpOnly; SameSite=strict; Secure` (secure solo en producción)
+- Frontend nunca accede al token → `credentials: 'include'` en todos los fetch
+- Backend lee `req.cookies.token`
+
+---
+
+## 8. Comandos Clave
+
+### Backend (servicios/)
 ```bash
-cd /home/nicolas/Documentos/Trabajo-React
-docker compose up -d --build
+npm install              # Instalar dependencias
+npx prisma generate      # Generar Prisma Client
+npx prisma migrate dev --name nombre   # Crear migración
+npx prisma db push       # Push schema sin migración (desarrollo)
+node prisma/seed.js      # Sembrar usuario admin
+npm run build            # Compilar TypeScript → dist/
+npm start                # Ejecutar backend (node dist/index.js)
+npm run dev              # Desarrollo con ts-node
 ```
 
-### Ver logs
+### Frontend
 ```bash
-docker compose logs -f backend   # o -f frontend, -f db
+npm install              # Instalar dependencias
+npm run dev              # Dev server en localhost:3000
+npm run build            # Build producción → dist/
+# Para build de deploy: VITE_BASE='/~dos/' npm run build
 ```
 
-### Reset completo (borra datos de PostgreSQL)
+### Deploy (SCP desde la raíz)
 ```bash
-docker compose down -v
-docker compose up -d --build
+# Compilar
+(cd servicios && npm run build)
+(cd frontend && VITE_BASE='/~dos/' npm run build)
+
+# Subir frontend
+scp -r frontend/dist/* dos@200.3.127.46:~/public_html/
+
+# Subir backend
+scp -r servicios/dist/* dos@200.3.127.46:~/servicios/dist/
+
+# Subir migraciones Prisma
+scp -r servicios/prisma/* dos@200.3.127.46:~/servicios/prisma/
+
+# PM2 detecta cambios y reinicia automáticamente
 ```
 
-### Comandos Prisma dentro del contenedor
+### Testeo local con curl
 ```bash
-docker compose exec -T backend npx prisma migrate deploy    # Aplicar migraciones
-docker compose exec -T backend npx prisma db push           # Push schema directamente
-docker compose exec backend npx prisma generate            # Generar cliente
-docker compose exec backend node /app/prisma/seed.js      # Re-seed manual
+curl -c cookies.txt -X POST http://localhost:3001/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"secret123"}'
+
+curl -b cookies.txt http://localhost:3001/v1/users
 ```
 
 ---
 
-## 8. Variables de Entorno (backend/.env)
+## 9. Variables de Entorno (servicios/.env)
 
-```
-# JWT
+```env
 JWT_SECRET=dev_jwt_secret_key_2024
 JWT_EXPIRES_IN=24h
-
-# Server
 PORT=3001
 NODE_ENV=development
-
-# CORS (frontend expuesto en puerto 3003 del host)
 FRONTEND_URL=http://localhost:3000
-
-# Database (dentro de Docker la red usa hostname 'db')
-DATABASE_URL=postgresql://postgres:postgres@db:5432/odontodb?schema=public
+DATABASE_URL="file:./dev.db"
 ```
 
 ---
 
-## 9. Decisiones Arquitectónicas Importantes
+## 10. Notas para Futuros Agentes
 
-### Autenticación: Cookies HTTP-only (NO LocalStorage)
-- El token JWT se almacena en una cookie `httpOnly; SameSite=strict; Secure`
-- El frontend nunca toca el token directamente
-- Todos los fetch deben incluir `credentials: 'include'`
-- El backend lee `req.cookies.token`
+1. **Import de Prisma en CommonJS:** Usar `import pkg from '@prisma/client'; const { PrismaClient } = pkg;` — no usar `import { PrismaClient }` directo.
 
-### Versionado de API: `/api/v1/...`
-- Todos los endpoints nuevos deben ir bajo `/api/v1/`
+2. **El entry point es `src/index.ts`** → compila a `dist/index.js`. El `app.listen` va en `index.ts`, la config Express en `app.ts`.
 
-### Theme System (Clinical Precision)
-- Light mode: fondo blanco (`#FFFFFF`), primary azul (`#2563EB`), texto casi negro (`#0F172A`)
-- Dark mode: fondo navy (`#181825`), primary azul (`#2563EB`), texto blanco (`#F8FAFC`)
-- Toggle guardado en `localStorage` con `ThemeProvider`
+3. **Las rutas NO llevan prefijo `/api`.** El proxy inverso del servidor (Apache/Nginx) agrega `/~USUARIO/api`. Las rutas son `/v1/auth/login`, `/v1/users`, etc.
 
-### shadcn/ui Sidebar
-- Componente nativo `Sidebar` de shadcn con `collapsible="icon"`
-- Ancho: 280px expandido, 64px contraído
-- SidebarProvider + AppSidebar + SidebarInset
-- TooltipProvider envuelve toda la app
+4. **No usar `require/module.exports`** en los archivos `.ts`. Usar `import/export` de ES modules. TypeScript compila a CommonJS automáticamente.
 
-### Registro de Usuarios
-- Frontend: RegisterForm con validación en tiempo real (onBlur)
-- Valida: nombre, apellido, username, email, teléfono argentino, contraseña >= 6 chars
-- Valida contraseñas coincidentes
-- Muestra errores en rojo (bg-destructive/10)
+5. **Siempre usar `next(error)`** en controllers async. El error handler centralizado en `app.ts` mapea errores del service a HTTP.
 
----
+6. **Crear migraciones con `prisma migrate dev`** antes de cambiar el schema. El servidor aplica las migraciones automáticamente cuando detecta `prisma/migrations/` nuevo.
 
-## 10. Rutas del Frontend
+7. **Nunca subir `node_modules/` ni `.env` al servidor.** Solo `dist/` y `prisma/`.
 
-| Path | Componente | Requiere Auth? |
-|---|---|---|
-| `/` | LandingPage | ❌ No |
-| `/login` | LoginPage | ❌ No |
-| `/register` | RegisterPage | ❌ No |
-| `/dashboard` | DashboardPage | ✅ Sí |
-| `/doctors` | Placeholder | ✅ Sí |
-| `/patients` | Placeholder | ✅ Sí |
-| `/appointments` | Placeholder | ✅ Sí |
-| `/insurance` | Placeholder | ✅ Sí |
-| `/payments` | Placeholder | ✅ Sí |
+8. **Para instalar paquetes npm nuevos** en el servidor, conectarse por SSH y correr `npm install` en `~/servicios/`. Luego volver a compilar y subir `dist/`.
+
+9. **El frontend usa `basename` dinámico** en BrowserRouter que detecta `/~USUARIO`. Funciona tanto en local (`/`) como en el servidor (`/~dos/`).
+
+10. **Para build de producción del frontend**, usar `VITE_BASE`:
+    ```bash
+    VITE_BASE='/~dos/' npm run build
+    ```
 
 ---
 
 ## 11. Estado Actual del Proyecto
 
-### ✅ Implementado
-- [x] Stack Docker completo (Postgres + Backend + Frontend)
+### Implementado
+- [x] Backend TypeScript con CommonJS (siguiendo guía Schujman)
+- [x] SQLite via Prisma con migraciones
 - [x] Autenticación JWT con cookies HTTP-only
 - [x] Login por username O email
 - [x] Registro de usuarios con validación frontend + backend
-- [x] CRUD completo de usuarios (User repository + service + controller)
+- [x] CRUD completo de usuarios
 - [x] Validaciones expandibles (teléfono argentino, email)
-- [x] Modelo User con Role enum (SUPER_ADMIN, OWNER, DENTIST, SECRETARY, PATIENT)
 - [x] Theme system Clinical Precision (light/dark)
-- [x] shadcn/ui Sidebar nativo con collapsible "icon"
-- [x] Rutas: Landing, Login, Register, Dashboard + placeholders
-- [x] Componentes shadcn: button, card, input, label, avatar, separator, sheet, sidebar, tooltip
+- [x] shadcn/ui Sidebar con collapsible "icon"
+- [x] API_BASE dinámico (detecta servidor vs local)
+- [x] React Router basename dinámico
+- [x] Vite con base configurable via VITE_BASE
 
-### ❌ Pendiente
+### Pendiente
 - [ ] CRUD de doctores
 - [ ] CRUD de pacientes
 - [ ] Agenda / calendario de turnos
@@ -310,51 +263,7 @@ DATABASE_URL=postgresql://postgres:postgres@db:5432/odontodb?schema=public
 - [ ] Control de pagos
 - [ ] Historias clínicas con tratamientos
 - [ ] Sidebar funcional (placeholders → páginas reales)
-- [ ] Definir modelo multi-clínica
 
 ---
 
-## 12. Notas para Futuros Agentes
-
-1. **Nunca modificar `server.js` salvo para cambiar el puerto.** Toda la configuración de Express debe ir en `src/app.js`.
-
-2. **Nunca importar Prisma directamente desde controllers o routes.** Siempre usar `src/config/database.js` o el repository correspondiente.
-
-3. **Siempre usar `next(error)` en controllers async.** El error handler centralizado en `app.js` traduce errores del service a códigos HTTP.
-
-4. **Toda ruta nueva va bajo `/api/v1/`** y también bajo `/` en el frontend (App.jsx con Sidebar).
-
-5. **El proyecto usa CommonJS** (`require`/`module.exports`) en el backend, ESM (`import`/`export`) en el frontend.
-
-6. **Para agregar componentes shadcn:**
-   ```bash
-   docker compose exec frontend npx shadcn add <componente>
-   ```
-   **Nunca** instalar paquetes npm o shadcn directamente en la máquina host.
-
-7. **Para testear endpoints con cookies:**
-   ```bash
-   curl -c cookies.txt -X POST http://localhost:3002/api/v1/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"secret123"}'
-   curl -b cookies.txt http://localhost:3002/api/v1/users
-   ```
-
-8. **Si el CSS falla con errores de Tailwind:** verificar que las variables CSS en `index.css` usen formato HSL (no OKLCH).
-
-9. **El sidebar usa `collapsible="icon"`** — cuando se achica solo muestra íconos, no desaparece.
-
-10. **RegisterForm tiene validación en tiempo real** con `onBlur` — los errores aparecen en rojo (`bg-destructive/10`) debajo de cada campo.
-
----
-
-## 13. Puertos
-
-| Servicio | Puerto Interno | Puerto Host |
-|---|---|---|
-| Frontend (Vite) | 3000 | 3003 |
-| Backend (Express) | 3001 | 3002 |
-| PostgreSQL | 5432 | 5433 |
-
----
-
-*Última actualización: Mayo 2026*
-*Estado: Registro + Login + Sidebar funcionando, placeholders para módulos de la clínica*
+*Última actualización: Mayo 2026 — Migrado a TypeScript + SQLite según Guía Schujman 2026*

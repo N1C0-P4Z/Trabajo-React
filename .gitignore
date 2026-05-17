@@ -32,3 +32,7 @@ logs/
 
 # Testing
 coverage/
+
+# SQLite
+*.db
+*.db-journal

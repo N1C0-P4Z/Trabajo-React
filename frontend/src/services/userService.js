@@ -1,4 +1,5 @@
-const API_URL = '/api/v1/users';
+import { API_BASE } from './apiConfig';
+const API_URL = `${API_BASE}/v1/users`;
 
 const userService = {
   async register(userData) {

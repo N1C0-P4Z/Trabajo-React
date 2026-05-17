@@ -1,0 +1,6 @@
+// Detecta si estás en el servidor o en local
+// En el servidor: http://200.3.127.46:8002/~USUARIO/api/...
+// En local:      http://localhost:3001/...
+export const API_BASE = window.location.pathname.startsWith('/~')
+  ? `/${window.location.pathname.split('/')[1]}/api`
+  : 'http://localhost:3001';

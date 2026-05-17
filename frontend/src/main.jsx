@@ -7,9 +7,18 @@ import { TooltipProvider } from './components/ui/tooltip';
 import App from './App';
 import './index.css';
 
+// Detecta si está en el servidor (~USUARIO) o en local
+function getBasename() {
+  const path = window.location.pathname;
+  if (path.startsWith('/~')) {
+    return '/' + path.split('/')[1];
+  }
+  return '/';
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={getBasename()}>
       <ThemeProvider>
         <TooltipProvider>
           <AuthProvider>
