@@ -18,7 +18,7 @@ const menuItems = [
   { title: 'Dashboard', path: '/dashboard' },
   { title: 'Doctores', path: '/doctors' },
   { title: 'Pacientes', path: '/patients' },
-  { title: 'Turnos', path: '/appointments' },
+  { title: 'Agenda', path: '/appointments' },
   { title: 'Obras Sociales', path: '/insurance' },
   { title: 'Pagos', path: '/payments' },
 ];

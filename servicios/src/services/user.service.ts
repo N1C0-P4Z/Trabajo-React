@@ -162,8 +162,8 @@ export const userService = {
     return newUser;
   },
 
-  async getAllUsers() {
-    return await userRepository.findAll();
+  async getAllUsers(role?: string) {
+    return await userRepository.findAll(role);
   },
 
   async getUserById(id: string | number) {

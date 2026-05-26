@@ -8,13 +8,41 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  username      String   @unique
-  email         String   @unique
-  first_name    String
-  last_name     String
-  phone         String
-  password_hash String
-  role          String   @default("PATIENT")
-  created_at    DateTime @default(now())
+  id                   Int             @id @default(autoincrement())
+  username             String          @unique
+  email                String          @unique
+  first_name           String
+  last_name            String
+  phone                String
+  password_hash        String
+  role                 String          @default("PATIENT")
+  created_at           DateTime        @default(now())
+  patient_appointments Appointment[]   @relation("PatientAppointments")
+  doctor_appointments  Appointment[]   @relation("DoctorAppointments")
+}
+
+model AppointmentType {
+  id                         Int           @id @default(autoincrement())
+  name                       String        @unique
+  description                String?
+  suggested_duration_minutes Int           @default(30)
+  color                      String        @default("#3B82F6")
+  created_at                 DateTime      @default(now())
+  appointments               Appointment[]
+}
+
+model Appointment {
+  id               Int             @id @default(autoincrement())
+  patient_id       Int
+  doctor_id        Int
+  datetime         DateTime
+  duration_minutes Int             @default(30)
+  type_id          Int?
+  status           String          @default("PENDIENTE")
+  notes            String?
+  obra_social      String?
+  created_at       DateTime        @default(now())
+  patient          User            @relation("PatientAppointments", fields: [patient_id], references: [id])
+  doctor           User            @relation("DoctorAppointments", fields: [doctor_id], references: [id])
+  type             AppointmentType? @relation(fields: [type_id], references: [id], onDelete: SetNull)
 }

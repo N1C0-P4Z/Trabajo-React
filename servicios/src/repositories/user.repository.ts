@@ -41,8 +41,13 @@ export const userRepository = {
     });
   },
 
-  async findAll() {
+  async findAll(role?: string) {
+    const where: any = {};
+    if (role) {
+      where.role = role;
+    }
     return await prisma.user.findMany({
+      where,
       select: {
         id: true,
         username: true,

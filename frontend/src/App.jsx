@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import AgendaPage from './pages/AgendaPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 
@@ -66,17 +67,7 @@ function App() {
             </div>
           } 
         />
-        <Route 
-          path="/appointments" 
-          element={
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground mb-2">Citas</h1>
-                <p className="text-muted-foreground">Próximamente...</p>
-              </div>
-            </div>
-          } 
-        />
+        <Route path="/appointments" element={<AgendaPage />} />
         <Route 
           path="/insurance" 
           element={

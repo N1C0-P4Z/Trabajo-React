@@ -54,7 +54,19 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     'El teléfono es requerido',
     'No hay datos para actualizar',
     'ID de usuario inválido',
-    'Username/email and password are required'
+    'Username/email and password are required',
+    // Appointment validation errors
+    'Campos requeridos faltantes para el turno',
+    'Rango de fechas inválido (start > end)',
+    'Rango de fechas inválido (formato incorrecto)',
+    'Rango de fechas inválido',
+    'El nombre del tipo de turno es requerido',
+    'El nombre del tipo de turno no puede estar vacío',
+    'ID de tipo de turno inválido',
+    'ID de turno inválido',
+    'Fecha y hora inválidas',
+    'Estado inválido',
+    'Los parámetros start y end son requeridos'
   ];
 
   if (validationErrors.some(msg => err.message.includes(msg) || err.message === msg)) {
@@ -62,7 +74,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     return;
   }
 
-  if (err.message.includes('ya está en uso')) {
+  if (err.message.includes('ya está en uso') || err.message === 'Ya existe un tipo de turno con ese nombre') {
     res.status(409).json({ error: err.message });
     return;
   }
@@ -80,12 +92,17 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   if (err.message === 'No autorizado para editar este usuario' ||
       err.message === 'No autorizado para eliminar usuarios' ||
       err.message === 'No se puede eliminar al administrador del sistema' ||
-      err.message === 'No se puede eliminar a otro administrador') {
+      err.message === 'No se puede eliminar a otro administrador' ||
+      err.message === 'No autorizado para gestionar tipos de turno') {
     res.status(403).json({ error: err.message });
     return;
   }
 
-  if (err.message === 'Usuario no encontrado') {
+  if (err.message === 'Usuario no encontrado' ||
+      err.message === 'Tipo de turno no encontrado' ||
+      err.message === 'Turno no encontrado' ||
+      err.message === 'Paciente no encontrado' ||
+      err.message === 'Doctor no encontrado') {
     res.status(404).json({ error: err.message });
     return;
   }

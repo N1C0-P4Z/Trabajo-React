@@ -24,7 +24,8 @@ export const userController = {
 
   async getAllUsers(req: Request, res: Response, next: NextFunction) {
     try {
-      const users = await userService.getAllUsers();
+      const role = req.query.role as string | undefined;
+      const users = await userService.getAllUsers(role);
       res.json(users);
     } catch (error) {
       next(error);
