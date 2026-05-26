@@ -56,7 +56,8 @@ export const userController = {
   async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const result = await userService.deleteUser(id);
+      const requestingUser = (req as any).user; // { userId, username, role }
+      const result = await userService.deleteUser(id, requestingUser);
       res.json(result);
     } catch (error) {
       next(error);
