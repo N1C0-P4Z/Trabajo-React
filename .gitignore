@@ -36,3 +36,5 @@ coverage/
 # SQLite
 *.db
 *.db-journal
+.atl/
+skill-registry.md
