@@ -25,7 +25,8 @@ export const authService = {
 
     const token = generateToken({
       userId: user.id,
-      username: user.username
+      username: user.username,
+      role: user.role
     });
 
     return {

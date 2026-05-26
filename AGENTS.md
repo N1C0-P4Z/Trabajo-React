@@ -237,9 +237,15 @@ DATABASE_URL="file:./dev.db"
     VITE_BASE='/~dos/' npm run build
     ```
 
+11. **NO generar archivos HTML o CSS sueltos.** El proyecto debe ser **100% JavaScript/TypeScript**.
+    - `index.html` y `index.css` existen porque Vite + Tailwind + shadcn/ui los requieren técnicamente. Se migrarán en el futuro.
+    - **Todo el estilo va con Tailwind utility classes** dentro de JSX/TSX. Nada de archivos `.css` extra.
+    - **No crear páginas HTML estáticas.** Si es una vista, es un componente React (`.jsx`/`.tsx`).
+    - Stray HTML/CSS existente se migrará a JS/TS progresivamente.
+
 ---
 
-## 11. Estado Actual del Proyecto
+## 12. Estado Actual del Proyecto
 
 ### Implementado
 - [x] Backend TypeScript con CommonJS (siguiendo guía Schujman)

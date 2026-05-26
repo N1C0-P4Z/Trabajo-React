@@ -77,7 +77,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     return;
   }
 
-  if (err.message === 'No autorizado para editar este usuario') {
+  if (err.message === 'No autorizado para editar este usuario' ||
+      err.message === 'No autorizado para eliminar usuarios' ||
+      err.message === 'No se puede eliminar al administrador del sistema' ||
+      err.message === 'No se puede eliminar a otro administrador') {
     res.status(403).json({ error: err.message });
     return;
   }

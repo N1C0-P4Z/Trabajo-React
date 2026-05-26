@@ -234,7 +234,7 @@ export const userService = {
     return updated;
   },
 
-  async deleteUser(id: string | number) {
+  async deleteUser(id: string | number, requestingUser?: { userId: number; role: string }) {
     const userId = typeof id === 'string' ? parseInt(id) : id;
     if (!userId || isNaN(userId)) {
       throw new Error('ID de usuario inválido');
@@ -243,6 +243,16 @@ export const userService = {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new Error('Usuario no encontrado');
+    }
+
+    // Rule 1: SUPER_ADMIN and OWNER accounts are NEVER deletable
+    if (user.role === 'SUPER_ADMIN' || user.role === 'OWNER') {
+      throw new Error('No se puede eliminar al administrador del sistema');
+    }
+
+    // Rule 2: Only SUPER_ADMIN and OWNER roles can delete users
+    if (!requestingUser || (requestingUser.role !== 'SUPER_ADMIN' && requestingUser.role !== 'OWNER')) {
+      throw new Error('No autorizado para eliminar usuarios');
     }
 
     await userRepository.delete(userId);

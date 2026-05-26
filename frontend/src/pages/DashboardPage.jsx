@@ -125,13 +125,26 @@ const DashboardPage = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(u.id, u.username)}
-                        disabled={deleting === u.id || u.id === user?.id}
-                        className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {deleting === u.id ? 'Eliminando...' : 'Eliminar'}
-                      </button>
+                      {(user?.role === 'SUPER_ADMIN' || user?.role === 'OWNER') ? (
+                        (u.role === 'SUPER_ADMIN' || u.role === 'OWNER') ? (
+                          <span
+                            className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground cursor-not-allowed select-none"
+                            title="No se puede eliminar al administrador del sistema"
+                          >
+                            Protegido
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleDelete(u.id, u.username)}
+                            disabled={deleting === u.id || u.id === user?.id}
+                            className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {deleting === u.id ? 'Eliminando...' : 'Eliminar'}
+                          </button>
+                        )
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
