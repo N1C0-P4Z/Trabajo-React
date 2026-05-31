@@ -1,6 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getDateRangeForView, navigateDate, formatWeekRange } from '@/lib/dateUtils';
 import { API_BASE } from '@/services/apiConfig';
 import appointmentService from '@/services/appointmentService';
 import appointmentTypeService from '@/services/appointmentTypeService';
@@ -8,71 +16,33 @@ import CalendarGrid from '@/components/CalendarGrid';
 import WeekView from '@/components/WeekView';
 import DayView from '@/components/DayView';
 import AppointmentForm from '@/components/AppointmentForm';
+import ResumenPanel from '@/components/ResumenPanel';
+
+// Locally defined — also used by WeekView; extracted here to avoid circular dependency
+function getWeekDays(date) {
+  const day = date.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() + mondayOffset);
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 const VIEWS = [
   { key: 'month', label: 'Mes' },
   { key: 'week', label: 'Semana' },
   { key: 'day', label: 'Día' },
 ];
-
-function getDateRangeForView(date, view) {
-  const start = new Date(date);
-  const end = new Date(date);
-
-  switch (view) {
-    case 'month': {
-      // Get first day of month
-      start.setDate(1);
-      start.setHours(0, 0, 0, 0);
-      // Get 6-week window to cover calendar grid
-      const dayOfWeek = start.getDay();
-      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      start.setDate(start.getDate() + mondayOffset);
-
-      // End = start + 41 days (6 weeks)
-      end.setTime(start.getTime());
-      end.setDate(end.getDate() + 41);
-      end.setHours(23, 59, 59, 999);
-      break;
-    }
-    case 'week': {
-      const day = start.getDay();
-      const mondayOffset = day === 0 ? -6 : 1 - day;
-      start.setDate(start.getDate() + mondayOffset);
-      start.setHours(0, 0, 0, 0);
-
-      end.setTime(start.getTime());
-      end.setDate(end.getDate() + 6);
-      end.setHours(23, 59, 59, 999);
-      break;
-    }
-    case 'day': {
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-      break;
-    }
-    default:
-      break;
-  }
-
-  return { start: start.toISOString(), end: end.toISOString() };
-}
-
-function navigateDate(date, view, direction) {
-  const d = new Date(date);
-  switch (view) {
-    case 'month':
-      d.setMonth(d.getMonth() + direction);
-      break;
-    case 'week':
-      d.setDate(d.getDate() + direction * 7);
-      break;
-    case 'day':
-      d.setDate(d.getDate() + direction);
-      break;
-  }
-  return d;
-}
 
 const AgendaPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -83,6 +53,7 @@ const AgendaPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedDoctorId, setSelectedDoctorId] = useState('all');
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -138,6 +109,12 @@ const AgendaPage = () => {
     loadAppointments();
   }, [currentDate, viewMode]);
 
+  // Filter appointments by selected doctor
+  const filteredAppointments = useMemo(() => {
+    if (selectedDoctorId === 'all') return appointments;
+    return appointments.filter((a) => String(a.doctor_id) === selectedDoctorId);
+  }, [appointments, selectedDoctorId]);
+
   // Navigation handlers
   const handlePrev = useCallback(() => {
     setCurrentDate((prev) => navigateDate(prev, viewMode, -1));
@@ -146,10 +123,6 @@ const AgendaPage = () => {
   const handleNext = useCallback(() => {
     setCurrentDate((prev) => navigateDate(prev, viewMode, 1));
   }, [viewMode]);
-
-  const handleToday = useCallback(() => {
-    setCurrentDate(new Date());
-  }, []);
 
   const handleDayClick = useCallback((date) => {
     setCurrentDate(date);
@@ -186,6 +159,33 @@ const AgendaPage = () => {
     appointmentService.getAll(start, end).then(setAppointments).catch(() => {});
   }, [currentDate, viewMode]);
 
+  // Heading label based on viewMode
+  const currentLabel = useMemo(() => {
+    switch (viewMode) {
+      case 'month':
+        return capitalize(
+          currentDate.toLocaleDateString('es-AR', {
+            month: 'long',
+            year: 'numeric',
+          })
+        );
+      case 'week': {
+        const days = getWeekDays(currentDate);
+        return formatWeekRange(days);
+      }
+      case 'day':
+        return capitalize(
+          currentDate.toLocaleDateString('es-AR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })
+        );
+      default:
+        return '';
+    }
+  }, [currentDate, viewMode]);
+
   const renderView = () => {
     if (loading && appointments.length === 0) {
       return (
@@ -199,36 +199,27 @@ const AgendaPage = () => {
       case 'month':
         return (
           <CalendarGrid
-            appointments={appointments}
+            appointments={filteredAppointments}
             currentDate={currentDate}
-            onDateChange={setCurrentDate}
             onDayClick={handleDayClick}
-            onPrev={handlePrev}
-            onNext={handleNext}
           />
         );
       case 'week':
         return (
           <WeekView
-            appointments={appointments}
+            appointments={filteredAppointments}
             currentDate={currentDate}
-            onDateChange={setCurrentDate}
             onSlotClick={handleSlotClick}
             onAppointmentClick={handleAppointmentClick}
-            onPrev={handlePrev}
-            onNext={handleNext}
           />
         );
       case 'day':
         return (
           <DayView
-            appointments={appointments}
+            appointments={filteredAppointments}
             currentDate={currentDate}
-            onDateChange={setCurrentDate}
             onSlotClick={handleSlotClick}
             onAppointmentClick={handleAppointmentClick}
-            onPrev={handlePrev}
-            onNext={handleNext}
           />
         );
       default:
@@ -237,60 +228,111 @@ const AgendaPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className="flex rounded-lg border border-border bg-card p-0.5">
-            {VIEWS.map((v) => (
+    <div className="flex gap-6 h-full">
+      {/* Main content */}
+      <div className="flex-1 min-w-0 flex flex-col gap-4">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            {/* Chevron navigation */}
+            <div className="flex border border-border rounded-lg overflow-hidden">
               <button
-                key={v.key}
-                onClick={() => setViewMode(v.key)}
-                className={cn(
-                  'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                  viewMode === v.key
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
+                onClick={handlePrev}
+                className="px-2 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors border-r border-border"
               >
-                {v.label}
+                <ChevronLeft className="w-4 h-4" />
               </button>
-            ))}
+              <button
+                onClick={handleNext}
+                className="px-2 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Heading */}
+            <h2 className="text-lg font-semibold text-foreground">
+              {currentLabel}
+            </h2>
           </div>
 
-          {/* Today button */}
-          <Button variant="outline" size="sm" onClick={handleToday}>
-            Hoy
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* Doctor filter */}
+            <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Todos los doctores" />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom">
+                <SelectItem value="all">Todos los doctores</SelectItem>
+                {doctors.map((doc) => (
+                  <SelectItem key={doc.id} value={String(doc.id)}>
+                    Dr/a. {doc.first_name} {doc.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* View toggle — segmented control */}
+            <div className="flex bg-muted p-0.5 rounded-lg">
+              {VIEWS.map((v) => (
+                <button
+                  key={v.key}
+                  onClick={() => {
+                    setViewMode(v.key);
+                    setCurrentDate(new Date());
+                  }}
+                  className={cn(
+                    'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+                    viewMode === v.key
+                      ? 'bg-card shadow-sm text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Add button */}
+            <button
+              onClick={handleNewAppointment}
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              + Nuevo turno
+            </button>
+          </div>
         </div>
 
-        {/* Add button */}
-        <Button onClick={handleNewAppointment}>
-          + Nuevo turno
-        </Button>
+        {/* Error */}
+        {error && (
+          <div className="rounded-xl bg-destructive/10 text-destructive text-sm p-3">
+            {error}
+          </div>
+        )}
+
+        {/* View content — fills remaining height */}
+        <div className="flex-1 min-h-0">
+          {renderView()}
+        </div>
+
+        {/* Appointment Form Dialog */}
+        <AppointmentForm
+          open={dialogOpen}
+          onClose={handleDialogClose}
+          onSave={handleSave}
+          appointment={editingAppointment}
+          types={types}
+          patients={patients}
+          doctors={doctors}
+          appointments={filteredAppointments}
+          doctorId={selectedDoctorId}
+        />
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-xl bg-destructive/10 text-destructive text-sm p-3">
-          {error}
-        </div>
-      )}
-
-      {/* View content */}
-      {renderView()}
-
-      {/* Appointment Form Dialog */}
-      <AppointmentForm
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        onSave={handleSave}
-        appointment={editingAppointment}
-        types={types}
-        patients={patients}
-        doctors={doctors}
-      />
+      {/* Sidebar — Resumen Panel */}
+      <aside className="hidden lg:flex flex-col w-80 flex-shrink-0">
+        <ResumenPanel appointments={filteredAppointments} viewMode={viewMode} />
+      </aside>
     </div>
   );
 };

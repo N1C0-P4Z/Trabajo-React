@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import userService from '../services/userService';
 
@@ -65,12 +64,7 @@ const DashboardPage = () => {
             Gestioná los usuarios del sistema
           </p>
         </div>
-        <Link
-          to="/register"
-          className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          + Nuevo Usuario
-        </Link>
+
       </div>
 
       {/* Success Message */}

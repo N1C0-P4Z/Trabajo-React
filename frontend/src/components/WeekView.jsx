@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { isSameDay, isToday } from '@/lib/dateUtils';
 
-const HOUR_HEIGHT = 60; // px per hour
+const HOUR_HEIGHT = 192; // px per hour
 const START_HOUR = 8;
 const END_HOUR = 20;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
-const TOTAL_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT;
+const TOTAL_HEIGHT = (TOTAL_HOURS + 1) * HOUR_HEIGHT;
 
 function getWeekDays(date) {
   const day = date.getDay();
@@ -24,35 +24,9 @@ function getWeekDays(date) {
   return days;
 }
 
-function isSameDay(d1, d2) {
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
-  );
-}
-
-function isToday(date) {
-  return isSameDay(date, new Date());
-}
-
-function formatWeekRange(days) {
-  const first = days[0];
-  const last = days[6];
-  const opts = { day: 'numeric', month: 'long' };
-
-  if (first.getFullYear() !== last.getFullYear()) {
-    return `${first.toLocaleDateString('es-AR', { ...opts, year: 'numeric' })} – ${last.toLocaleDateString('es-AR', { ...opts, year: 'numeric' })}`;
-  }
-  if (first.getMonth() !== last.getMonth()) {
-    return `${first.toLocaleDateString('es-AR', { ...opts, year: 'numeric' })} – ${last.toLocaleDateString('es-AR', { ...opts, year: 'numeric' })}`;
-  }
-  return `${first.getDate()} – ${last.getDate()} de ${first.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}`;
-}
-
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-const WeekView = ({ appointments, currentDate, onDateChange, onSlotClick, onAppointmentClick, onPrev, onNext }) => {
+const WeekView = ({ appointments, currentDate, onSlotClick, onAppointmentClick }) => {
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
 
   // Group appointments by day and compute position
@@ -74,8 +48,8 @@ const WeekView = ({ appointments, currentDate, onDateChange, onSlotClick, onAppo
 
         // Calculate top position from START_HOUR
         const startMinutes = (hours - START_HOUR) * 60 + minutes;
-        const top = (startMinutes / (TOTAL_HOURS * 60)) * TOTAL_HEIGHT;
-        const height = (duration / (TOTAL_HOURS * 60)) * TOTAL_HEIGHT;
+        const top = (startMinutes / 60) * HOUR_HEIGHT;
+        const height = (duration / 60) * HOUR_HEIGHT;
 
         result.push({
           ...appt,
@@ -95,8 +69,6 @@ const WeekView = ({ appointments, currentDate, onDateChange, onSlotClick, onAppo
     timeSlots.push(`${String(h).padStart(2, '0')}:00`);
   }
 
-  const weekLabel = formatWeekRange(weekDays);
-
   const handleSlotClick = (day, hour) => {
     const clickedDate = new Date(day);
     clickedDate.setHours(hour, 0, 0, 0);
@@ -104,25 +76,8 @@ const WeekView = ({ appointments, currentDate, onDateChange, onSlotClick, onAppo
   };
 
   return (
-    <div className="space-y-4">
-      {/* Week navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" onClick={onPrev}>
-            ‹
-          </Button>
-          <Button variant="outline" size="sm" onClick={onNext}>
-            ›
-          </Button>
-        </div>
-        <h2 className="text-lg font-semibold capitalize text-foreground">
-          {weekLabel}
-        </h2>
-        <div className="w-[68px]" />
-      </div>
-
-      {/* Week grid */}
-      <div className="rounded-lg border border-border overflow-hidden">
+    /* Week grid */
+    <div className="rounded-lg border border-border h-full flex flex-col">
         {/* Day headers */}
         <div className="grid grid-cols-[50px_repeat(7,1fr)] bg-muted/50 border-b border-border">
           <div className="px-2 py-2 text-xs text-muted-foreground" />
@@ -151,94 +106,126 @@ const WeekView = ({ appointments, currentDate, onDateChange, onSlotClick, onAppo
           ))}
         </div>
 
-        {/* Body: time grid */}
-        <div
-          className="grid grid-cols-[50px_repeat(7,1fr)] relative"
-          style={{ minHeight: TOTAL_HEIGHT }}
-        >
-          {/* Time labels */}
-          <div className="relative">
-            {timeSlots.map((time, i) => (
+        {/* Body: time grid — scrollable */}
+        <div className="overflow-y-auto flex-1 min-h-0">
+          <div
+            className="grid grid-cols-[50px_repeat(7,1fr)] relative"
+            style={{ height: TOTAL_HEIGHT }}
+          >
+            {/* Time labels */}
+            <div className="relative">
+              {timeSlots.map((time, i) => (
+                <div
+                  key={i}
+                  className="absolute w-full text-xs text-muted-foreground text-right pr-1 leading-none"
+                  style={{ top: i * HOUR_HEIGHT + HOUR_HEIGHT / 2, transform: 'translateY(-50%)' }}
+                >
+                  {time}
+                </div>
+              ))}
+            </div>
+
+            {/* Day columns */}
+            {weekDays.map((day, dayIdx) => (
               <div
-                key={i}
-                className="absolute w-full text-[10px] text-muted-foreground text-right pr-2"
-                style={{ top: i * HOUR_HEIGHT, transform: 'translateY(-50%)' }}
+                key={dayIdx}
+                className={cn(
+                  'relative border-l border-border',
+                  isToday(day) && 'bg-primary/[0.02]'
+                )}
+                style={{ height: TOTAL_HEIGHT }}
               >
-                {time}
+                {/* Hour row lines — clickable slots */}
+                {Array.from({ length: TOTAL_HOURS * 2 + 1 }).map((_, rowIdx) => {
+                  const isLast = rowIdx === TOTAL_HOURS * 2;
+                  const hour = START_HOUR + Math.floor(rowIdx / 2);
+                  const halfHour = rowIdx % 2 === 0 ? 0 : 30;
+                  return (
+                    <div
+                      key={rowIdx}
+                      className={cn(
+                        'absolute w-full border-t border-border/30 transition-colors',
+                        !isLast && 'cursor-pointer hover:bg-muted/20'
+                      )}
+                      style={{
+                        top: (rowIdx * 0.5) * HOUR_HEIGHT,
+                        height: HOUR_HEIGHT / 2,
+                      }}
+                      onClick={isLast ? undefined : () => handleSlotClick(day, hour + halfHour / 60)}
+                    />
+                  );
+                })}
+
+                {/* Appointments — same layout as DayView */}
+                {positionedAppointments
+                  .filter((a) => a.dayIndex === dayIdx)
+                  .map((appt) => (
+                    <div
+                      key={appt.id}
+                      className={cn(
+                        'absolute left-0.5 right-0.5 rounded-lg p-1.5',
+                        'cursor-pointer hover:opacity-90 transition-opacity overflow-hidden'
+                      )}
+                      style={{
+                        top: appt.top,
+                        height: appt.height,
+                        backgroundColor: `${appt.type?.color || '#3B82F6'}CC`,
+                        color: '#fff',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAppointmentClick?.(appt);
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold truncate">
+                            {appt.patient?.first_name} {appt.patient?.last_name}
+                          </p>
+                          {appt.height > 50 && (
+                            <p className="text-[10px] opacity-90 truncate">
+                              Dr/a. {appt.doctor?.first_name} {appt.doctor?.last_name}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-medium opacity-90 shrink-0">
+                          {new Date(appt.datetime).toLocaleTimeString('es-AR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+
+                      {appt.height > 70 && (
+                        <div className="mt-1 flex items-center gap-1 flex-wrap">
+                          {appt.type && (
+                            <span className="text-[10px] font-medium bg-white/20 rounded px-1 py-0.5">
+                              {appt.type.name}
+                            </span>
+                          )}
+                          <span className="text-[10px] opacity-80">
+                            {appt.duration_minutes}min
+                          </span>
+                          {appt.obra_social && (
+                            <span className="text-[10px] opacity-80 truncate">
+                              {appt.obra_social}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {appt.height > 90 && appt.notes && (
+                        <p className="text-[10px] opacity-80 mt-0.5 truncate">
+                          {appt.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
               </div>
             ))}
           </div>
-
-          {/* Day columns */}
-          {weekDays.map((day, dayIdx) => (
-            <div
-              key={dayIdx}
-              className={cn(
-                'relative border-l border-border',
-                isToday(day) && 'bg-primary/[0.02]'
-              )}
-              style={{ minHeight: TOTAL_HEIGHT }}
-            >
-              {/* Hour row lines — clickable slots */}
-              {Array.from({ length: TOTAL_HOURS * 2 }).map((_, rowIdx) => {
-                const hour = START_HOUR + Math.floor(rowIdx / 2);
-                const halfHour = rowIdx % 2 === 0 ? 0 : 30;
-                return (
-                  <div
-                    key={rowIdx}
-                    className="absolute w-full border-t border-border/30 hover:bg-muted/20 cursor-pointer transition-colors"
-                    style={{
-                      top: (rowIdx * 0.5) * HOUR_HEIGHT,
-                      height: HOUR_HEIGHT / 2,
-                    }}
-                    onClick={() => handleSlotClick(day, hour + halfHour / 60)}
-                  />
-                );
-              })}
-
-              {/* Appointments */}
-              {positionedAppointments
-                .filter((a) => a.dayIndex === dayIdx)
-                .map((appt) => (
-                  <div
-                    key={appt.id}
-                    className={cn(
-                      'absolute left-0.5 right-0.5 rounded-md px-1.5 py-0.5',
-                      'cursor-pointer hover:opacity-90 transition-opacity overflow-hidden',
-                      'border border-white/10'
-                    )}
-                    style={{
-                      top: appt.top,
-                      height: appt.height,
-                      backgroundColor: `${appt.type?.color || '#3B82F6'}CC`,
-                      color: '#fff',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAppointmentClick?.(appt);
-                    }}
-                  >
-                    <div className="text-[10px] font-medium leading-tight truncate">
-                      {new Date(appt.datetime).toLocaleTimeString('es-AR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </div>
-                    <div className="text-[10px] leading-tight truncate">
-                      {appt.patient?.last_name}, {appt.patient?.first_name?.charAt(0)}.
-                    </div>
-                    {appt.height > 40 && appt.type && (
-                      <div className="text-[9px] opacity-80 leading-tight truncate">
-                        {appt.type.name}
-                      </div>
-                    )}
-                  </div>
-                ))}
-            </div>
-          ))}
         </div>
       </div>
-    </div>
   );
 };
 

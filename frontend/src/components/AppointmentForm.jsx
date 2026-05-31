@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import appointmentService from '@/services/appointmentService';
+import TimeSlotPicker from '@/components/TimeSlotPicker';
 
 const statusOptions = [
   { value: 'PENDIENTE', label: 'Pendiente' },
@@ -61,6 +62,8 @@ const AppointmentForm = ({
   types,
   patients,
   doctors,
+  appointments = [],
+  doctorId = 'all',
 }) => {
   const isEditing = !!appointment;
   const [saving, setSaving] = useState(false);
@@ -68,8 +71,9 @@ const AppointmentForm = ({
 
   // Form state
   const [patientId, setPatientId] = useState('');
-  const [doctorId, setDoctorId] = useState('');
+  const [formDoctorId, setFormDoctorId] = useState('');
   const [selectedDate, setSelectedDate] = useState(undefined);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [timeStr, setTimeStr] = useState('');
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [typeId, setTypeId] = useState('');
@@ -81,7 +85,7 @@ const AppointmentForm = ({
   useEffect(() => {
     if (appointment) {
       setPatientId(String(appointment.patient_id));
-      setDoctorId(String(appointment.doctor_id));
+      setFormDoctorId(String(appointment.doctor_id));
       setSelectedDate(parseDateFromISO(appointment.datetime));
       setTimeStr(parseTimeFromISO(appointment.datetime));
       setDurationMinutes(appointment.duration_minutes || 30);
@@ -91,7 +95,7 @@ const AppointmentForm = ({
       setObraSocial(appointment.obra_social || '');
     } else {
       setPatientId('');
-      setDoctorId('');
+      setFormDoctorId('');
       setSelectedDate(undefined);
       setTimeStr('');
       setDurationMinutes(30);
@@ -120,7 +124,7 @@ const AppointmentForm = ({
       setError('Seleccioná un paciente');
       return;
     }
-    if (!doctorId) {
+    if (!formDoctorId) {
       setError('Seleccioná un doctor');
       return;
     }
@@ -142,7 +146,7 @@ const AppointmentForm = ({
 
     const payload = {
       patient_id: Number(patientId),
-      doctor_id: Number(doctorId),
+      doctor_id: Number(formDoctorId),
       datetime,
       duration_minutes: durationMinutes,
       type_id: Number(typeId),
@@ -211,7 +215,7 @@ const AppointmentForm = ({
             {/* Doctor */}
             <div className="grid gap-2">
               <Label htmlFor="doctor">Doctor/a</Label>
-              <Select value={doctorId} onValueChange={setDoctorId}>
+              <Select value={formDoctorId} onValueChange={setFormDoctorId}>
                 <SelectTrigger id="doctor">
                   <SelectValue placeholder="Seleccionar doctor..." />
                 </SelectTrigger>
@@ -228,9 +232,10 @@ const AppointmentForm = ({
             {/* Date */}
             <div className="grid gap-2">
               <Label>Fecha</Label>
-              <Popover>
+              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
+                    type="button"
                     variant="outline"
                     className={cn(
                       'justify-start text-left font-normal',
@@ -251,43 +256,49 @@ const AppointmentForm = ({
                   <Calendar
                     mode="single"
                     selected={selectedDate}
-                    onSelect={setSelectedDate}
+                    onSelect={(date) => {
+                      setSelectedDate(date);
+                      setDatePickerOpen(false);
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
             </div>
 
-            {/* Time + Duration */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="time">Horario</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={timeStr}
-                  onChange={(e) => setTimeStr(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="duration">Duración (min)</Label>
-                <Select
-                  value={String(durationMinutes)}
-                  onValueChange={(v) => setDurationMinutes(Number(v))}
-                >
-                  <SelectTrigger id="duration">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="15">15 min</SelectItem>
-                    <SelectItem value="30">30 min</SelectItem>
-                    <SelectItem value="45">45 min</SelectItem>
-                    <SelectItem value="60">1 hora</SelectItem>
-                    <SelectItem value="90">1:30 horas</SelectItem>
-                    <SelectItem value="120">2 horas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Time slot picker */}
+            <div className="grid gap-2">
+              <Label>Horario</Label>
+              <TimeSlotPicker
+                date={selectedDate}
+                appointments={appointments}
+                value={timeStr}
+                onChange={setTimeStr}
+                durationMinutes={durationMinutes}
+                editingId={appointment?.id}
+                doctorId={doctorId}
+              />
+            </div>
+
+            {/* Duration */}
+            <div className="grid gap-2">
+              <Label htmlFor="duration">Duración (min)</Label>
+              <Select
+                value={String(durationMinutes)}
+                onValueChange={(v) => setDurationMinutes(Number(v))}
+              >
+                <SelectTrigger id="duration">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15 min</SelectItem>
+                  <SelectItem value="30">30 min</SelectItem>
+                  <SelectItem value="45">45 min</SelectItem>
+                  <SelectItem value="60">1 hora</SelectItem>
+                  <SelectItem value="90">1:30 horas</SelectItem>
+                  <SelectItem value="120">2 horas</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Type */}
