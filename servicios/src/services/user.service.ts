@@ -2,6 +2,26 @@ import { hashPassword } from '../utils/bcrypt';
 import { userRepository } from '../repositories/user.repository';
 
 // ============================================================
+// CATÁLOGO DE ESPECIALIDADES
+// ============================================================
+
+export const SPECIALTIES = [
+  "Odontología General",
+  "Ortodoncia",
+  "Endodoncia",
+  "Periodoncia",
+  "Cirugía Oral y Maxilofacial",
+  "Odontopediatría",
+  "Rehabilitación Oral y Prostodoncia",
+  "Odontología Estética (o Cosmética)",
+  "Implantología",
+  "Odontología Forense",
+  "Patología Oral y Maxilofacial"
+] as const;
+
+export type Specialty = typeof SPECIALTIES[number];
+
+// ============================================================
 // VALIDADORES EXPANDIBLES
 // ============================================================
 
@@ -108,6 +128,35 @@ function validatePassword(password: string): string {
   return password;
 }
 
+function validateSpecialty(specialty: string): string {
+  if (!specialty || typeof specialty !== 'string') {
+    throw new Error('La especialidad es requerida');
+  }
+
+  const trimmed = specialty.trim();
+
+  if (!SPECIALTIES.includes(trimmed as any)) {
+    throw new Error('Especialidad no válida');
+  }
+
+  return trimmed;
+}
+
+async function validateLicenseNumber(license: string, excludeUserId?: number): Promise<string> {
+  if (!license || typeof license !== 'string') {
+    throw new Error('El número de matrícula es requerido');
+  }
+
+  const trimmed = license.trim();
+
+  const existing = await userRepository.findByLicenseNumber(trimmed);
+  if (existing && (!excludeUserId || (existing as any).id !== excludeUserId)) {
+    throw new Error('El número de matrícula ya está en uso');
+  }
+
+  return trimmed;
+}
+
 // ============================================================
 // SERVICIO DE USUARIOS
 // ============================================================
@@ -121,6 +170,10 @@ export const userService = {
     phone: string;
     password: string;
     role?: string;
+    specialty?: string;
+    license_number?: string;
+    is_active?: boolean;
+    avatar_url?: string;
   }) {
     const { email, first_name, last_name, phone, password } = data;
 
@@ -147,6 +200,16 @@ export const userService = {
       throw new Error('El número de teléfono ya está en uso');
     }
 
+    // Validar specialty si se provee
+    if (data.specialty) {
+      validateSpecialty(data.specialty);
+    }
+
+    // Validar license_number si se provee
+    if (data.license_number) {
+      await validateLicenseNumber(data.license_number);
+    }
+
     const password_hash = await hashPassword(validPassword);
 
     const newUser = await userRepository.create({
@@ -156,14 +219,18 @@ export const userService = {
       last_name: validLastName,
       phone: validPhone,
       password_hash,
-      role: data.role || 'PATIENT'
+      role: data.role || 'PATIENT',
+      specialty: data.specialty || null,
+      license_number: data.license_number || null,
+      is_active: data.is_active !== undefined ? data.is_active : true,
+      avatar_url: data.avatar_url || null
     });
 
     return newUser;
   },
 
-  async getAllUsers() {
-    return await userRepository.findAll();
+  async getAllUsers(role?: string) {
+    return await userRepository.findAll(role);
   },
 
   async getUserById(id: string | number) {
@@ -180,7 +247,7 @@ export const userService = {
     return user;
   },
 
-  async updateUser(id: string | number, data: any, requestingUserId: number | null = null) {
+  async updateUser(id: string | number, data: any, requestingUser?: { userId: number; role: string } | null) {
     const userId = typeof id === 'string' ? parseInt(id) : id;
     if (!userId || isNaN(userId)) {
       throw new Error('ID de usuario inválido');
@@ -191,8 +258,12 @@ export const userService = {
       throw new Error('Usuario no encontrado');
     }
 
-    if (requestingUserId && requestingUserId !== userId) {
-      throw new Error('No autorizado para editar este usuario');
+    // SUPER_ADMIN y OWNER pueden editar a cualquiera; el resto solo a sí mismos
+    if (requestingUser) {
+      const isAdmin = requestingUser.role === 'SUPER_ADMIN' || requestingUser.role === 'OWNER';
+      if (!isAdmin && requestingUser.userId !== userId) {
+        throw new Error('No autorizado para editar este usuario');
+      }
     }
 
     const updateData: any = {};
@@ -226,6 +297,30 @@ export const userService = {
       }
     }
 
+    if (data.specialty !== undefined) {
+      if (data.specialty === null || data.specialty === '') {
+        updateData.specialty = null;
+      } else {
+        updateData.specialty = validateSpecialty(data.specialty);
+      }
+    }
+
+    if (data.license_number !== undefined) {
+      if (data.license_number === null || data.license_number === '') {
+        updateData.license_number = null;
+      } else {
+        updateData.license_number = await validateLicenseNumber(data.license_number, userId);
+      }
+    }
+
+    if (data.is_active !== undefined) {
+      updateData.is_active = Boolean(data.is_active);
+    }
+
+    if (data.avatar_url !== undefined) {
+      updateData.avatar_url = data.avatar_url || null;
+    }
+
     if (Object.keys(updateData).length === 0) {
       throw new Error('No hay datos para actualizar');
     }
@@ -257,5 +352,9 @@ export const userService = {
 
     await userRepository.delete(userId);
     return { message: 'Usuario eliminado exitosamente' };
+  },
+
+  getSpecialties() {
+    return [...SPECIALTIES];
   }
 };

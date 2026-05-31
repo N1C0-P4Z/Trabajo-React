@@ -9,8 +9,28 @@ export interface UserRecord {
   phone: string;
   password_hash: string;
   role: string;
+  specialty: string | null;
+  license_number: string | null;
+  is_active: boolean;
+  avatar_url: string | null;
   created_at: Date;
 }
+
+// Select compartido que NUNCA incluye password_hash
+const publicSelect = {
+  id: true,
+  username: true,
+  email: true,
+  first_name: true,
+  last_name: true,
+  phone: true,
+  role: true,
+  specialty: true,
+  license_number: true,
+  is_active: true,
+  avatar_url: true,
+  created_at: true
+};
 
 export const userRepository = {
   async findByUsername(username: string) {
@@ -28,47 +48,31 @@ export const userRepository = {
   async findById(id: number) {
     return await prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        phone: true,
-        role: true,
-        created_at: true
-      }
+      select: publicSelect
     });
   },
 
-  async findAll() {
+  async findAll(role?: string) {
+    const where: any = {};
+    if (role) {
+      where.role = role;
+    }
     return await prisma.user.findMany({
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        phone: true,
-        role: true,
-        created_at: true
-      }
+      where,
+      select: publicSelect
+    });
+  },
+
+  async findByLicenseNumber(licenseNumber: string) {
+    return await prisma.user.findFirst({
+      where: { license_number: licenseNumber }
     });
   },
 
   async create(data: any) {
     return await prisma.user.create({
       data,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        phone: true,
-        role: true,
-        created_at: true
-      }
+      select: publicSelect
     });
   },
 
@@ -76,16 +80,7 @@ export const userRepository = {
     return await prisma.user.update({
       where: { id },
       data,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        phone: true,
-        role: true,
-        created_at: true
-      }
+      select: publicSelect
     });
   },
 

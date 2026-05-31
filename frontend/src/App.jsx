@@ -5,7 +5,10 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import DoctorsPage from './pages/DoctorsPage';
+import DoctorProfilePage from './pages/DoctorProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 
 function App() {
@@ -47,12 +50,17 @@ function App() {
         <Route 
           path="/doctors" 
           element={
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground mb-2">Doctores</h1>
-                <p className="text-muted-foreground">Próximamente...</p>
-              </div>
-            </div>
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+              <DoctorsPage />
+            </RoleProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/doctors/:id" 
+          element={
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+              <DoctorProfilePage />
+            </RoleProtectedRoute>
           } 
         />
         <Route 

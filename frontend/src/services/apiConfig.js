@@ -3,4 +3,4 @@
 // En local:      http://localhost:3001/...
 export const API_BASE = window.location.pathname.startsWith('/~')
   ? `/${window.location.pathname.split('/')[1]}/api`
-  : 'http://localhost:3001';
+  : `http://localhost:${import.meta.env.VITE_API_PORT || '3001'}`;
