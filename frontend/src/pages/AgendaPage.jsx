@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -45,6 +46,7 @@ const VIEWS = [
 ];
 
 const AgendaPage = () => {
+  const [searchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('month');
   const [appointments, setAppointments] = useState([]);
@@ -53,7 +55,8 @@ const AgendaPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedDoctorId, setSelectedDoctorId] = useState('all');
+  const doctorFromUrl = searchParams.get('doctorId');
+  const [selectedDoctorId, setSelectedDoctorId] = useState(doctorFromUrl || 'all');
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
