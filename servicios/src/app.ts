@@ -66,7 +66,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     'ID de turno inválido',
     'Fecha y hora inválidas',
     'Estado inválido',
-    'Los parámetros start y end son requeridos'
+    'Los parámetros start y end son requeridos',
+    // Doctor-specific validation errors
+    'Especialidad no válida',
+    'La especialidad es requerida',
+    'El número de matrícula es requerido'
   ];
 
   if (validationErrors.some(msg => err.message.includes(msg) || err.message === msg)) {
@@ -93,7 +97,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       err.message === 'No autorizado para eliminar usuarios' ||
       err.message === 'No se puede eliminar al administrador del sistema' ||
       err.message === 'No se puede eliminar a otro administrador' ||
-      err.message === 'No autorizado para gestionar tipos de turno') {
+      err.message === 'No autorizado para gestionar tipos de turno' ||
+      err.message === 'No autorizado para gestionar doctores') {
     res.status(403).json({ error: err.message });
     return;
   }

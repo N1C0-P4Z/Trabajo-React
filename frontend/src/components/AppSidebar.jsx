@@ -13,14 +13,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet } from 'lucide-react';
 
 const menuItems = [
-  { title: 'Dashboard', path: '/dashboard' },
-  { title: 'Doctores', path: '/doctors' },
-  { title: 'Pacientes', path: '/patients' },
-  { title: 'Agenda', path: '/appointments' },
-  { title: 'Obras Sociales', path: '/insurance' },
-  { title: 'Pagos', path: '/payments' },
+  { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { title: 'Doctores', path: '/doctors', icon: Stethoscope },
+  { title: 'Pacientes', path: '/patients', icon: Users },
+  { title: 'Agenda', path: '/appointments', icon: CalendarDays },
+  { title: 'Obras Sociales', path: '/insurance', icon: Shield },
+  { title: 'Pagos', path: '/payments', icon: Wallet },
 ];
 
 const AppSidebar = () => {
@@ -79,18 +80,25 @@ const AppSidebar = () => {
               <SidebarGroupLabel>Navegación</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={location.pathname === item.path}
-                        tooltip={item.title}
-                        onClick={handleNavClick}
-                      >
-                        <Link to={item.path}>{item.title}</Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {menuItems.map((item) => {
+                    const active = location.pathname === item.path;
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={active}
+                          tooltip={item.title}
+                          onClick={handleNavClick}
+                          className={active ? '!bg-primary/10 !text-primary hover:!bg-primary/15' : ''}
+                        >
+                          <Link to={item.path}>
+                            <item.icon className="size-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

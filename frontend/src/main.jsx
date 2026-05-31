@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TooltipProvider } from './components/ui/tooltip';
+import { Toaster } from './components/ui/sonner';
 import App from './App';
 import './index.css';
 
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <TooltipProvider>
           <AuthProvider>
             <App />
+            <Toaster />
           </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
