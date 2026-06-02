@@ -31,7 +31,6 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  UserPlus,
 } from 'lucide-react';
 
 // --- Constants ---
@@ -266,20 +265,13 @@ const PatientsPage = () => {
       </Breadcrumb>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Directorio de Pacientes
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gestioná la información administrativa de los pacientes de la clínica
-          </p>
-        </div>
-
-        <Button disabled className="shrink-0" title="Disponible próximamente">
-          <UserPlus className="size-3.5" />
-          Nuevo Paciente
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">
+          Directorio de Pacientes
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Gestioná la información administrativa de los pacientes de la clínica
+        </p>
       </div>
 
       {/* Filters Bar */}
