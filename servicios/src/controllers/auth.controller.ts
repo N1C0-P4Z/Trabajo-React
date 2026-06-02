@@ -10,7 +10,7 @@ export const authController = {
 
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.COOKIE_SECURE === 'true',
         sameSite: 'strict',
         maxAge: 24 * 60 * 60 * 1000
       });
@@ -24,7 +24,7 @@ export const authController = {
   logout(req: Request, res: Response) {
     res.clearCookie('token', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'strict'
     });
 
