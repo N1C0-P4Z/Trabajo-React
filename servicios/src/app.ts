@@ -70,7 +70,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     // Doctor-specific validation errors
     'Especialidad no válida',
     'La especialidad es requerida',
-    'El número de matrícula es requerido'
+    'El número de matrícula es requerido',
+    // Patient-specific validation errors
+    'ID de paciente inválido',
+    'El DNI es requerido'
   ];
 
   if (validationErrors.some(msg => err.message.includes(msg) || err.message === msg)) {
@@ -98,7 +101,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       err.message === 'No se puede eliminar al administrador del sistema' ||
       err.message === 'No se puede eliminar a otro administrador' ||
       err.message === 'No autorizado para gestionar tipos de turno' ||
-      err.message === 'No autorizado para gestionar doctores') {
+      err.message === 'No autorizado para gestionar doctores' ||
+      err.message === 'No autorizado para gestionar pacientes') {
     res.status(403).json({ error: err.message });
     return;
   }
