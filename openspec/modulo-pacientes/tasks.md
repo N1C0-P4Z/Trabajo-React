@@ -9,7 +9,7 @@
 | Chained PRs recommended | Yes |
 | Suggested split | PR 1 (Backend ~435) → PR 2 (Frontend Page ~330) → PR 3 (Modal ~260) |
 | Delivery strategy | ask-always |
-| Chain strategy | pending |
+| Chain strategy | feature-branch-chain |
 
 Decision needed before apply: Yes
 Chained PRs recommended: Yes
@@ -26,19 +26,19 @@ Chain strategy: pending
 
 ## Phase 1: Schema + Backend CRUD (~435 lines)
 
-- [ ] 1.1 Add `Patient` model to `servicios/prisma/schema.prisma` — `user_id` (unique FK), `dni` (unique), `obra_social`, `numero_afiliado`, `fecha_nacimiento`, `direccion`, `telefono_alternativo`, `is_active`, `created_at`; add `patient` relation on `User`
-- [ ] 1.2 Run `npx prisma migrate dev --name add-patient-model` and `npx prisma generate`
-- [ ] 1.3 Create `servicios/src/repositories/patient.repository.ts` — `create`, `findByUserId`, `findByDni`, `findById` (include User), `findAll` (search/filters/pagination), `count`, `update`, `softDelete`
-- [ ] 1.4 Create `servicios/src/services/patient.service.ts` — `listPatients` (filters + computed visit fields), `getPatientById`, `updatePatient` (authz + dni uniqueness), `deletePatient` (authz + soft-delete)
-- [ ] 1.5 Create `servicios/src/controllers/patient.controller.ts` — `list`, `getById`, `update`, `delete`; parse params/query, call service, `next(error)` pattern
-- [ ] 1.6 Create `servicios/src/routes/v1/patient.routes.ts` — `GET /`, `GET /:id`, `PUT /:id`, `DELETE /:id` with `authenticateToken` middleware
-- [ ] 1.7 Register `patientRoutes` in `servicios/src/routes/v1/index.ts` — add import + `router.use('/patients', patientRoutes)`
+- [x] 1.1 Add `Patient` model to `servicios/prisma/schema.prisma` — `user_id` (unique FK), `dni` (unique), `obra_social`, `numero_afiliado`, `fecha_nacimiento`, `direccion`, `telefono_alternativo`, `is_active`, `created_at`; add `patient` relation on `User`
+- [x] 1.2 Run `npx prisma migrate dev --name add-patient-model` and `npx prisma generate`
+- [x] 1.3 Create `servicios/src/repositories/patient.repository.ts` — `create`, `findByUserId`, `findByDni`, `findById` (include User), `findAll` (search/filters/pagination), `count`, `update`, `softDelete`
+- [x] 1.4 Create `servicios/src/services/patient.service.ts` — `listPatients` (filters + computed visit fields), `getPatientById`, `updatePatient` (authz + dni uniqueness), `deletePatient` (authz + soft-delete)
+- [x] 1.5 Create `servicios/src/controllers/patient.controller.ts` — `list`, `getById`, `update`, `delete`; parse params/query, call service, `next(error)` pattern
+- [x] 1.6 Create `servicios/src/routes/v1/patient.routes.ts` — `GET /`, `GET /:id`, `PUT /:id`, `DELETE /:id` with `authenticateToken` middleware
+- [x] 1.7 Register `patientRoutes` in `servicios/src/routes/v1/index.ts` — add import + `router.use('/patients', patientRoutes)
 
 ## Phase 2: Auto-creation + Backfill (~50 lines)
 
-- [ ] 2.1 Modify `servicios/src/services/user.service.ts` `register()` — after `userRepository.create`, if `role === 'PATIENT'`, call `patientRepository.create({ user_id: newUser.id, dni: '' })` (empty defaults)
-- [ ] 2.2 Create `servicios/prisma/seed-backfill-patients.js` — find all Users with `role=PATIENT`, for each without a Patient row create one; idempotent (skip if exists)
-- [ ] 2.3 Verify: `curl` register a new PATIENT user → confirm Patient row exists; run backfill twice → confirm no duplicates
+- [x] 2.1 Modify `servicios/src/services/user.service.ts` `register()` — after `userRepository.create`, if `role === 'PATIENT'`, call `patientRepository.create({ user_id: newUser.id, dni: '' })` (empty defaults)
+- [x] 2.2 Create `servicios/prisma/seed-backfill-patients.js` — find all Users with `role=PATIENT`, for each without a Patient row create one; idempotent (skip if exists)
+- [x] 2.3 Verify: `curl` register a new PATIENT user → confirm Patient row exists; run backfill twice → confirm no duplicates
 
 ## Phase 3: Frontend Page + Service (~330 lines)
 
@@ -50,4 +50,4 @@ Chain strategy: pending
 
 - [x] 4.1 Create `frontend/src/components/PatientFormModal.jsx` — shadcn Dialog + react-hook-form + zod; fields: dni, obra_social, numero_afiliado, fecha_nacimiento, direccion, telefono_alternativo, is_active
 - [x] 4.2 Wire `PatientFormModal` into `PatientsPage.jsx` — add edit button per row, open modal with patient data, refresh list on save
-- [ ] 4.3 Verify: open modal → edit dni/obra_social → save → table updates; confirm 403 on non-admin
+- [x] 4.3 Verify: open modal → edit dni/obra_social → save → table updates; confirm 403 on non-admin
