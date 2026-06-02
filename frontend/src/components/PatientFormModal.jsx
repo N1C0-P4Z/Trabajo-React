@@ -281,16 +281,15 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between rounded-md border border-border p-3">
                   <div>
-                    <FormLabel className="text-xs font-medium cursor-pointer">
+                    <FormLabel className="text-xs font-medium cursor-pointer" htmlFor="is_active">
                       Paciente Activo
                     </FormLabel>
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+                  <Switch
+                    id="is_active"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
                 </FormItem>
               )}
             />
