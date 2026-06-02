@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import patientService from '../services/patientService';
 import userService from '../services/userService';
 import { useAuth } from '../hooks/useAuth';
+import PatientFormModal from '../components/PatientFormModal';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -98,6 +99,10 @@ const PatientsPage = () => {
   // Pagination
   const [pagina, setPagina] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // Modal state
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState(null);
 
   // --- Data fetching ---
 
@@ -200,6 +205,23 @@ const PatientsPage = () => {
       hasta,
     };
     loadPatients(filters, newPage);
+  };
+
+  const handleEditPatient = (patient) => {
+    setEditingPatient(patient);
+    setFormModalOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    const filters = {
+      search,
+      obra_social: obraSocial,
+      estado,
+      doctor_id: doctorId,
+      desde,
+      hasta,
+    };
+    loadPatients(filters, pagina);
   };
 
   // --- Pagination helpers ---
@@ -484,15 +506,10 @@ const PatientsPage = () => {
                       variant="ghost"
                       size="icon-sm"
                       disabled={!isAdmin}
-                      onClick={() =>
-                        toast.info('Próximamente', {
-                          description:
-                            'El editor de pacientes estará disponible en la próxima actualización.',
-                        })
-                      }
+                      onClick={() => handleEditPatient(patient)}
                       title={
                         isAdmin
-                          ? 'Editar paciente (próximamente)'
+                          ? 'Editar paciente'
                           : 'Requiere permisos de administrador'
                       }
                     >
@@ -545,6 +562,14 @@ const PatientsPage = () => {
           </div>
         </>
       )}
+
+      {/* Edit Patient Modal */}
+      <PatientFormModal
+        open={formModalOpen}
+        onOpenChange={setFormModalOpen}
+        onSuccess={handleFormSuccess}
+        patient={editingPatient}
+      />
     </div>
   );
 };
