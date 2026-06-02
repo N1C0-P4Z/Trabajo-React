@@ -1,11 +1,10 @@
 # Apply Progress: modulo-pacientes
 
-**PR**: 1 of 3 — Backend (Schema + CRUD + Auto-creation + Backfill)
 **Mode**: Standard (Strict TDD disabled)
 **Branch**: feature/pacientes
 **Chain strategy**: feature-branch-chain
 
-## Completed Tasks (Phase 1 + Phase 2)
+## Completed Tasks (Phase 1 + Phase 2 + Phase 3)
 
 ### Phase 1: Schema + Backend CRUD
 - [x] 1.1 — Add Patient model to schema.prisma (15 lines, 1:1 relation to User)
@@ -21,7 +20,13 @@
 - [x] 2.2 — Create seed-backfill-patients.js script (idempotent, creates PatientProfile for existing PATIENTs with BACKFILL-{userId} DNI)
 - [x] 2.3 — Ran backfill: 2 pacientes existentes creados (juan peres, Test Patient)
 
-## Files Changed
+### Phase 3: Frontend Page + Service
+- [x] 3.1 — Create patientService.js with getAll(filters), getById(id), update(id, data), delete(id) using API_BASE + credentials:include. Query string builder for filters.
+- [x] 3.2 — Create PatientsPage.jsx with: breadcrumb (Inicio > Pacientes), header ("Directorio de Pacientes" + description + disabled "Nuevo Paciente" button), filters bar (search input with Enter submit, obra social Select, estado Select, doctor Select fetched from userService.getDoctors(), date range desde/hasta), div-based responsive table (avatar+name+email, DNI, cobertura badge, última visita, próximo turno with calendar icon, acciones visibility+edit with opacity-0 group-hover:opacity-100), pagination footer ("Mostrando X a Y de Z pacientes" + page buttons), loading/error/empty states matching DoctorsPage pattern.
+- [x] 3.3 — Modify App.jsx: add PatientsPage import, replace placeholder `/patients` route with `<PatientsPage />` (no RoleProtectedRoute — accessible to all authenticated users; edit/delete actions check role client-side).
+
+## Files Changed (cumulative)
+
 | File | Action | What Was Done |
 |------|--------|---------------|
 | servicios/prisma/schema.prisma | Modified | Added Patient model with 1:1 relation to User |
@@ -33,9 +38,14 @@
 | servicios/src/routes/v1/index.ts | Modified | Added patientRoutes |
 | servicios/src/services/user.service.ts | Modified | Auto-create PatientProfile on PATIENT registration |
 | servicios/prisma/seed-backfill-patients.js | Created | Idempotent backfill script |
+| **frontend/src/services/patientService.js** | **Created** | **API client: getAll, getById, update, delete with query string builder** |
+| **frontend/src/pages/PatientsPage.jsx** | **Created** | **Full patients directory page: table, filters, pagination** |
+| **frontend/src/App.jsx** | **Modified** | **Replaced /patients placeholder with PatientsPage route** |
 
 ## Verification
-- ✅ Prisma generate — passed
-- ✅ tsc build — passed (0 errors)
-- ✅ Migration applied — dev.db updated
-- ✅ Backfill run — 2 PatientProfiles created
+- ✅ Prisma generate — passed (PR 1)
+- ✅ tsc build — passed, 0 errors (PR 1)
+- ✅ Migration applied — dev.db updated (PR 1)
+- ✅ Backfill run — 2 PatientProfiles created (PR 1)
+- ✅ Vite build — passed, 0 errors (PR 2)
+- ✅ 2924 modules transformed, 179KB gzipped (PR 2)

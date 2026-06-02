@@ -42,9 +42,9 @@ Chain strategy: pending
 
 ## Phase 3: Frontend Page + Service (~330 lines)
 
-- [ ] 3.1 Create `frontend/src/services/patientService.js` — `list(params)`, `getById(id)`, `update(id, data)`, `deactivate(id)` using `API_BASE` + `credentials: 'include'`
-- [ ] 3.2 Create `frontend/src/pages/PatientsPage.jsx` — table with columns (name, DNI, email, obra_social, last_visit, next_visit, estado), search input, filter bar (obra_social, estado), pagination controls, breadcrumb
-- [ ] 3.3 Modify `frontend/src/App.jsx` — replace `/patients` placeholder div with `<PatientsPage />` inside `RoleProtectedRoute`
+- [x] 3.1 Create `frontend/src/services/patientService.js` — `getAll(filters)`, `getById(id)`, `update(id, data)`, `delete(id)` using `API_BASE` + `credentials: 'include'`
+- [x] 3.2 Create `frontend/src/pages/PatientsPage.jsx` — table with columns (Paciente/avatar+name+email, DNI, Cobertura, Última Visita, Próximo Turno, Acciones visibility+edit), search input, filter bar (obra social dropdown, estado dropdown, doctor dropdown, date range), pagination controls (Mostrando X a Y de Z), breadcrumb, loading/empty/error states
+- [x] 3.3 Modify `frontend/src/App.jsx` — replace `/patients` placeholder div with `<PatientsPage />` (accessible to all authenticated users, not role-restricted)
 
 ## Phase 4: Frontend Edit Modal (~260 lines)
 
