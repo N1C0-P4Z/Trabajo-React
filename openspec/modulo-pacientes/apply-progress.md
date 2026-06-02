@@ -4,7 +4,7 @@
 **Branch**: feature/pacientes
 **Chain strategy**: feature-branch-chain
 
-## Completed Tasks (Phase 1 + Phase 2 + Phase 3)
+## Completed Tasks (Phase 1 + Phase 2 + Phase 3 + Phase 4)
 
 ### Phase 1: Schema + Backend CRUD
 - [x] 1.1 — Add Patient model to schema.prisma (15 lines, 1:1 relation to User)
@@ -25,6 +25,10 @@
 - [x] 3.2 — Create PatientsPage.jsx with: breadcrumb (Inicio > Pacientes), header ("Directorio de Pacientes" + description + disabled "Nuevo Paciente" button), filters bar (search input with Enter submit, obra social Select, estado Select, doctor Select fetched from userService.getDoctors(), date range desde/hasta), div-based responsive table (avatar+name+email, DNI, cobertura badge, última visita, próximo turno with calendar icon, acciones visibility+edit with opacity-0 group-hover:opacity-100), pagination footer ("Mostrando X a Y de Z pacientes" + page buttons), loading/error/empty states matching DoctorsPage pattern.
 - [x] 3.3 — Modify App.jsx: add PatientsPage import, replace placeholder `/patients` route with `<PatientsPage />` (no RoleProtectedRoute — accessible to all authenticated users; edit/delete actions check role client-side).
 
+### Phase 4: Frontend Edit Modal
+- [x] 4.1 — Create PatientFormModal.jsx with shadcn Dialog + react-hook-form + zod; fields: dni (required), obra_social (Select: Sin obra social / OSDE / Swiss Medical / Galeno / PAMI / Particular), numero_afiliado (optional), fecha_nacimiento (date, optional), direccion (native textarea, optional), telefono_alternativo (optional), is_active (Switch); server error banner, submitting state.
+- [x] 4.2 — Wire into PatientsPage: added formModalOpen + editingPatient state, handleEditPatient handler, handleFormSuccess refreshes patient list with current filters, edit button opens modal with patient data, PatientFormModal rendered at bottom.
+
 ## Files Changed (cumulative)
 
 | File | Action | What Was Done |
@@ -38,9 +42,10 @@
 | servicios/src/routes/v1/index.ts | Modified | Added patientRoutes |
 | servicios/src/services/user.service.ts | Modified | Auto-create PatientProfile on PATIENT registration |
 | servicios/prisma/seed-backfill-patients.js | Created | Idempotent backfill script |
-| **frontend/src/services/patientService.js** | **Created** | **API client: getAll, getById, update, delete with query string builder** |
-| **frontend/src/pages/PatientsPage.jsx** | **Created** | **Full patients directory page: table, filters, pagination** |
-| **frontend/src/App.jsx** | **Modified** | **Replaced /patients placeholder with PatientsPage route** |
+| frontend/src/services/patientService.js | Created | API client: getAll, getById, update, delete with query string builder |
+| frontend/src/pages/PatientsPage.jsx | Created + Modified | Full patients directory page; wired PatientFormModal |
+| frontend/src/App.jsx | Modified | Replaced /patients placeholder with PatientsPage route |
+| **frontend/src/components/PatientFormModal.jsx** | **Created** | **Edit modal: Dialog + react-hook-form + zod with all patient fields** |
 
 ## Verification
 - ✅ Prisma generate — passed (PR 1)
@@ -49,3 +54,5 @@
 - ✅ Backfill run — 2 PatientProfiles created (PR 1)
 - ✅ Vite build — passed, 0 errors (PR 2)
 - ✅ 2924 modules transformed, 179KB gzipped (PR 2)
+- ✅ Vite build — passed, 0 errors (PR 3)
+- ✅ 2925 modules transformed, 180KB gzipped (PR 3)

@@ -48,6 +48,6 @@ Chain strategy: pending
 
 ## Phase 4: Frontend Edit Modal (~260 lines)
 
-- [ ] 4.1 Create `frontend/src/components/PatientFormModal.jsx` — shadcn Dialog + react-hook-form + zod; fields: dni, obra_social, numero_afiliado, fecha_nacimiento, direccion, telefono_alternativo, is_active
-- [ ] 4.2 Wire `PatientFormModal` into `PatientsPage.jsx` — add edit button per row, open modal with patient data, refresh list on save
+- [x] 4.1 Create `frontend/src/components/PatientFormModal.jsx` — shadcn Dialog + react-hook-form + zod; fields: dni, obra_social, numero_afiliado, fecha_nacimiento, direccion, telefono_alternativo, is_active
+- [x] 4.2 Wire `PatientFormModal` into `PatientsPage.jsx` — add edit button per row, open modal with patient data, refresh list on save
 - [ ] 4.3 Verify: open modal → edit dni/obra_social → save → table updates; confirm 403 on non-admin
