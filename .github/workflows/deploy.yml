@@ -9,7 +9,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      VITE_BASE: '/~dos/'
+      VITE_BASE: ${{ secrets.VITE_BASE }}
 
     steps:
       - name: Checkout code
