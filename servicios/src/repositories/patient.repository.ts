@@ -151,7 +151,7 @@ export const patientRepository = {
         select: patientPublicSelect,
         skip: (pagina - 1) * limite,
         take: limite,
-        orderBy: { created_at: 'desc' }
+        orderBy: { user: { last_name: 'asc' } }
       }),
       prisma.patient.count({ where })
     ]);
