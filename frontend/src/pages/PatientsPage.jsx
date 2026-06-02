@@ -89,8 +89,16 @@ const PatientsPage = () => {
   const [doctors, setDoctors] = useState([]);
 
   // Filters
-  const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+
+  // Debounced search: fires applyFilters 300ms after the user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      applyFilters({ search: searchInput });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [obraSocial, setObraSocial] = useState(ALL);
   const [estado, setEstado] = useState(ALL);
   const [doctorId, setDoctorId] = useState(ALL);
@@ -147,7 +155,7 @@ const PatientsPage = () => {
     (overrides = {}) => {
       const raw = {
         search:
-          overrides.search !== undefined ? overrides.search : search,
+          overrides.search !== undefined ? overrides.search : searchInput,
         obra_social:
           overrides.obraSocial !== undefined ? overrides.obraSocial : obraSocial,
         estado:
@@ -169,14 +177,8 @@ const PatientsPage = () => {
       setPagina(1);
       loadPatients(filters, 1);
     },
-    [search, obraSocial, estado, doctorId, desde, hasta, loadPatients]
+    [searchInput, obraSocial, estado, doctorId, desde, hasta, loadPatients]
   );
-
-  const handleSearchSubmit = (e) => {
-    e?.preventDefault();
-    setSearch(searchInput);
-    applyFilters({ search: searchInput });
-  };
 
   const handleFilterChange = (key, value) => {
     // Update the corresponding state
@@ -203,7 +205,7 @@ const PatientsPage = () => {
   };
 
   function buildFilters() {
-    const raw = { search, obra_social: obraSocial, estado, doctor_id: doctorId, desde, hasta };
+    const raw = { search: searchInput, obra_social: obraSocial, estado, doctor_id: doctorId, desde, hasta };
     const f = {};
     for (const [key, val] of Object.entries(raw)) {
       if (val !== ALL && val !== '') f[key] = val;
@@ -277,10 +279,7 @@ const PatientsPage = () => {
       {/* Filters Bar */}
       <div className="flex flex-wrap items-end gap-3">
         {/* Search */}
-        <form
-          onSubmit={handleSearchSubmit}
-          className="flex items-center gap-1.5"
-        >
+        <div className="flex items-center gap-1.5">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
             <Input
@@ -291,14 +290,15 @@ const PatientsPage = () => {
             />
           </div>
           <Button
-            type="submit"
+            type="button"
             variant="ghost"
             size="icon-sm"
             className="shrink-0"
+            onClick={() => applyFilters({ search: searchInput })}
           >
             <Search className="size-3.5" />
           </Button>
-        </form>
+        </div>
 
         {/* Obra Social */}
         <Select
