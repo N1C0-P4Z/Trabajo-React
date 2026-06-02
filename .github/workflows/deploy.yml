@@ -1,0 +1,99 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      VITE_BASE: '/~dos/'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # ──── Backend ────
+
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: servicios
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: servicios
+
+      - name: Build backend (TypeScript → CommonJS)
+        run: npm run build
+        working-directory: servicios
+
+      # ──── Frontend ────
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      # ──── Deploy via SCP ────
+
+      - name: Deploy frontend to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          source: "frontend/dist/**"
+          target: "~/public_html"
+          strip_components: 2
+          overwrite: true
+
+      - name: Deploy backend to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          source: "servicios/dist/**"
+          target: "~/servicios/dist"
+          strip_components: 2
+          overwrite: true
+
+      - name: Deploy Prisma migrations to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          source: "servicios/prisma/**"
+          target: "~/servicios/prisma"
+          strip_components: 2
+          overwrite: true
+
+      # ──── Post-deploy: install + migrate + restart ────
+
+      - name: Install deps, run migrations, restart PM2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          script: |
+            cd ~/servicios
+            npm install --production
+            npx prisma generate
+            npx prisma migrate deploy
+            pm2 restart servicios || pm2 start dist/index.js --name servicios

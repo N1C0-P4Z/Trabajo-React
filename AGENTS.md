@@ -170,7 +170,24 @@ npm run build            # Build producción → dist/
 # Para build de deploy: VITE_BASE='/~dos/' npm run build
 ```
 
-### Deploy (SCP desde la raíz)
+### Deploy Automático (GitHub Actions)
+
+Push a `main` dispara el workflow `.github/workflows/deploy.yml` que:
+1. Compila backend (TypeScript → CommonJS) y frontend (Vite)
+2. Sube `dist/` y `prisma/` al servidor via SCP
+3. Corre `npm install --production`, `prisma generate`, `prisma migrate deploy` y `pm2 restart`
+
+Push a `develop` NO dispara deploy.
+
+**Secrets requeridos en GitHub (Settings → Secrets and variables → Actions):**
+| Secret | Valor |
+|---|---|
+| `SSH_HOST` | `200.3.127.46` |
+| `SSH_USER` | `dos` |
+| `SSH_PORT` | `22` (o el puerto real) |
+| `SSH_PRIVATE_KEY` | Clave privada SSH (generada en el server, pública en `~/.ssh/authorized_keys`) |
+
+### Deploy Manual (SCP desde la raíz)
 ```bash
 # Compilar
 (cd servicios && npm run build)
