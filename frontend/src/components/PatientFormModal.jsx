@@ -283,37 +283,70 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
               control={form.control}
               name="is_active"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-md border border-border p-3">
-                  <FormLabel className="text-xs font-medium cursor-pointer">
-                    Paciente Activo
-                  </FormLabel>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={field.value}
-                    onClick={() => {
-                      if (field.value) {
-                        // Active → Inactive: pedir confirmación
-                        pendingFieldRef.current = field;
-                        setConfirmOpen(true);
-                      } else {
-                        // Inactive → Active: cambio directo
-                        field.onChange(true);
-                      }
-                    }}
-                    className={cn(
-                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                      field.value ? "bg-primary" : "bg-input"
-                    )}
-                  >
-                    <span
+                <>
+                  <FormItem className="flex items-center justify-between rounded-md border border-border p-3">
+                    <FormLabel className="text-xs font-medium cursor-pointer">
+                      Paciente Activo
+                    </FormLabel>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={field.value}
+                      onClick={() => {
+                        if (field.value) {
+                          // Activo → Inactivo: mostrar confirmación
+                          pendingFieldRef.current = field;
+                          setConfirmOpen(true);
+                        } else {
+                          // Inactivo → Activo: cambio inmediato
+                          field.onChange(true);
+                        }
+                      }}
                       className={cn(
-                        "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform",
-                        field.value ? "translate-x-4" : "translate-x-0"
+                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        field.value ? "bg-primary" : "bg-input"
                       )}
-                    />
-                  </button>
-                </FormItem>
+                    >
+                      <span
+                        className={cn(
+                          "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform",
+                          field.value ? "translate-x-4" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </FormItem>
+
+                  {/* Confirmación de desactivación */}
+                  <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                    <DialogContent showCloseButton={false} className="sm:max-w-[400px]">
+                      <DialogHeader>
+                        <DialogTitle>¿Desactivar paciente?</DialogTitle>
+                        <DialogDescription>
+                          El paciente dejará de aparecer en búsquedas y no se le podrán
+                          asignar turnos nuevos. Podés volver a activarlo después desde el
+                          mismo panel.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => {
+                            if (pendingFieldRef.current) {
+                              pendingFieldRef.current.onChange(false);
+                              pendingFieldRef.current = null;
+                            }
+                            setConfirmOpen(false);
+                          }}
+                        >
+                          Desactivar
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
             />
 
@@ -324,37 +357,6 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
-
-    {/* Confirmación de desactivación de paciente */}
-    <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-      <DialogContent showCloseButton={false} className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>¿Desactivar paciente?</DialogTitle>
-          <DialogDescription>
-            El paciente dejará de aparecer en búsquedas y no se le podrán
-            asignar turnos nuevos. Podés volver a activarlo después desde el
-            mismo panel.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-            Cancelar
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              if (pendingFieldRef.current) {
-                pendingFieldRef.current.onChange(false);
-                pendingFieldRef.current = null;
-              }
-              setConfirmOpen(false);
-            }}
-          >
-            Desactivar
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
