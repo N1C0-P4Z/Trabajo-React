@@ -5,8 +5,10 @@ import { requireRole } from '../../middlewares/role';
 
 const router = Router();
 
-// Mutating routes: only SUPER_ADMIN and OWNER can create/update/delete users
-router.post('/', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.register);
+// Self-registration: public (anyone can create a PATIENT account)
+router.post('/', userController.register);
+
+// Mutating routes: only SUPER_ADMIN and OWNER can update/delete users
 router.put('/:id', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.updateUser);
 router.delete('/:id', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.deleteUser);
 

@@ -6,6 +6,21 @@ export const userController = {
     try {
       const { username, email, first_name, last_name, phone, password, role, specialty, license_number, is_active, avatar_url } = req.body;
 
+      // Server-side protection: unauthenticated users can only create PATIENT accounts
+      const user = (req as any).user;
+      const isAdmin = user && (user.role === 'SUPER_ADMIN' || user.role === 'OWNER');
+
+      if (!isAdmin) {
+        if (role && role !== 'PATIENT') {
+          res.status(403).json({ error: 'No autorizado para crear usuarios con este rol' });
+          return;
+        }
+        if (specialty || license_number) {
+          res.status(403).json({ error: 'No autorizado para asignar especialidad o matrícula' });
+          return;
+        }
+      }
+
       const newUser = await userService.register({
         username,
         email,
@@ -13,11 +28,11 @@ export const userController = {
         last_name,
         phone,
         password,
-        role,
-        specialty,
-        license_number,
-        is_active,
-        avatar_url
+        role: isAdmin ? role : undefined,
+        specialty: isAdmin ? specialty : undefined,
+        license_number: isAdmin ? license_number : undefined,
+        is_active: isAdmin ? is_active : undefined,
+        avatar_url: isAdmin ? avatar_url : undefined
       });
 
       res.status(201).json(newUser);

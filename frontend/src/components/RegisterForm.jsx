@@ -230,7 +230,7 @@ const RegisterForm = () => {
           <Input
             id="password"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={formData.password}
             onChange={handleChange}
@@ -250,7 +250,7 @@ const RegisterForm = () => {
           <Input
             id="confirmPassword"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={formData.confirmPassword}
             onChange={handleChange}
