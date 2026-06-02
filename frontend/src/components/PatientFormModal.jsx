@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
 import patientService from '../services/patientService';
 import { toast } from 'sonner';
 
@@ -30,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 
 // --- Constants ---
 
@@ -274,22 +274,32 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
               )}
             />
 
-            {/* is_active Switch */}
+            {/* is_active toggle — button nativo en vez de Switch de radix-ui */}
             <FormField
               control={form.control}
               name="is_active"
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between rounded-md border border-border p-3">
-                  <div>
-                    <FormLabel className="text-xs font-medium cursor-pointer" htmlFor="is_active">
-                      Paciente Activo
-                    </FormLabel>
-                  </div>
-                  <Switch
-                    id="is_active"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  <FormLabel className="text-xs font-medium cursor-pointer">
+                    Paciente Activo
+                  </FormLabel>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={field.value}
+                    onClick={() => field.onChange(!field.value)}
+                    className={cn(
+                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      field.value ? "bg-primary" : "bg-input"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform",
+                        field.value ? "translate-x-4" : "translate-x-0"
+                      )}
+                    />
+                  </button>
                 </FormItem>
               )}
             />
