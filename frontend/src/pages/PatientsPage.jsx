@@ -36,8 +36,10 @@ import {
 
 // --- Constants ---
 
+const ALL = '__ALL__';
+
 const OBRA_SOCIAL_OPTIONS = [
-  { value: '', label: 'Todas las obras sociales' },
+  { value: ALL, label: 'Todas las obras sociales' },
   { value: 'OSDE', label: 'OSDE' },
   { value: 'Swiss Medical', label: 'Swiss Medical' },
   { value: 'Galeno', label: 'Galeno' },
@@ -46,7 +48,7 @@ const OBRA_SOCIAL_OPTIONS = [
 ];
 
 const ESTADO_OPTIONS = [
-  { value: '', label: 'Todos' },
+  { value: ALL, label: 'Todos' },
   { value: 'active', label: 'Activo' },
   { value: 'inactive', label: 'Inactivo' },
 ];
@@ -90,9 +92,9 @@ const PatientsPage = () => {
   // Filters
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [obraSocial, setObraSocial] = useState('');
-  const [estado, setEstado] = useState('');
-  const [doctorId, setDoctorId] = useState('');
+  const [obraSocial, setObraSocial] = useState(ALL);
+  const [estado, setEstado] = useState(ALL);
+  const [doctorId, setDoctorId] = useState(ALL);
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
 
@@ -144,7 +146,7 @@ const PatientsPage = () => {
 
   const applyFilters = useCallback(
     (overrides = {}) => {
-      const filters = {
+      const raw = {
         search:
           overrides.search !== undefined ? overrides.search : search,
         obra_social:
@@ -158,6 +160,13 @@ const PatientsPage = () => {
         hasta:
           overrides.hasta !== undefined ? overrides.hasta : hasta,
       };
+      // Remove "ALL" sentinel values — they mean "no filter"
+      const filters = {};
+      for (const [key, val] of Object.entries(raw)) {
+        if (val !== ALL && val !== '') {
+          filters[key] = val;
+        }
+      }
       setPagina(1);
       loadPatients(filters, 1);
     },
@@ -194,17 +203,18 @@ const PatientsPage = () => {
     applyFilters({ [key]: value });
   };
 
+  function buildFilters() {
+    const raw = { search, obra_social: obraSocial, estado, doctor_id: doctorId, desde, hasta };
+    const f = {};
+    for (const [key, val] of Object.entries(raw)) {
+      if (val !== ALL && val !== '') f[key] = val;
+    }
+    return f;
+  }
+
   const handlePageChange = (newPage) => {
     setPagina(newPage);
-    const filters = {
-      search,
-      obra_social: obraSocial,
-      estado,
-      doctor_id: doctorId,
-      desde,
-      hasta,
-    };
-    loadPatients(filters, newPage);
+    loadPatients(buildFilters(), newPage);
   };
 
   const handleEditPatient = (patient) => {
@@ -213,15 +223,7 @@ const PatientsPage = () => {
   };
 
   const handleFormSuccess = () => {
-    const filters = {
-      search,
-      obra_social: obraSocial,
-      estado,
-      doctor_id: doctorId,
-      desde,
-      hasta,
-    };
-    loadPatients(filters, pagina);
+    loadPatients(buildFilters(), pagina);
   };
 
   // --- Pagination helpers ---
@@ -349,7 +351,7 @@ const PatientsPage = () => {
             <SelectValue placeholder="Doctor/a" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos los doctores</SelectItem>
+            <SelectItem value={ALL}>Todos los doctores</SelectItem>
             {doctors.map((doc) => (
               <SelectItem key={doc.id} value={String(doc.id)}>
                 {doc.first_name} {doc.last_name}

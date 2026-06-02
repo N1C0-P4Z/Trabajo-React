@@ -35,7 +35,7 @@ import { Switch } from '@/components/ui/switch';
 // --- Constants ---
 
 const OBRA_SOCIAL_FORM_OPTIONS = [
-  { value: '', label: 'Sin obra social' },
+  { value: 'NINGUNA', label: 'Sin obra social' },
   { value: 'OSDE', label: 'OSDE' },
   { value: 'Swiss Medical', label: 'Swiss Medical' },
   { value: 'Galeno', label: 'Galeno' },
@@ -66,7 +66,7 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
     resolver: zodResolver(patientSchema),
     defaultValues: {
       dni: '',
-      obra_social: '',
+      obra_social: 'NINGUNA',
       numero_afiliado: '',
       fecha_nacimiento: '',
       direccion: '',
@@ -81,7 +81,7 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
       if (patient) {
         form.reset({
           dni: patient.dni || '',
-          obra_social: patient.obra_social || '',
+          obra_social: patient.obra_social || 'NINGUNA',
           numero_afiliado: patient.numero_afiliado || '',
           fecha_nacimiento: patient.fecha_nacimiento
             ? patient.fecha_nacimiento.slice(0, 10)
@@ -93,7 +93,7 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
       } else {
         form.reset({
           dni: '',
-          obra_social: '',
+          obra_social: 'NINGUNA',
           numero_afiliado: '',
           fecha_nacimiento: '',
           direccion: '',
@@ -112,7 +112,7 @@ const PatientFormModal = ({ open, onOpenChange, onSuccess, patient }) => {
     try {
       // Remove empty optional fields before sending
       const payload = { ...data };
-      if (!payload.obra_social) delete payload.obra_social;
+      if (payload.obra_social === 'NINGUNA') delete payload.obra_social;
       if (!payload.numero_afiliado) delete payload.numero_afiliado;
       if (!payload.fecha_nacimiento) delete payload.fecha_nacimiento;
       if (!payload.direccion) delete payload.direccion;
