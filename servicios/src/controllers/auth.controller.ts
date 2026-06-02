@@ -12,6 +12,7 @@ export const authController = {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === 'true',
         sameSite: 'strict',
+        path: '/',
         maxAge: 24 * 60 * 60 * 1000
       });
 
@@ -25,7 +26,8 @@ export const authController = {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: 'strict'
+      sameSite: 'strict',
+      path: '/'
     });
 
     res.json({ message: 'Logged out successfully' });
