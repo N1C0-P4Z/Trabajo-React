@@ -21,8 +21,23 @@ model User {
   is_active            Boolean         @default(true)
   avatar_url           String?
   created_at           DateTime        @default(now())
+  patient              Patient?
   patient_appointments Appointment[]   @relation("PatientAppointments")
   doctor_appointments  Appointment[]   @relation("DoctorAppointments")
+}
+
+model Patient {
+  id                  Int      @id @default(autoincrement())
+  user_id             Int      @unique
+  dni                 String   @unique
+  obra_social         String?
+  numero_afiliado     String?
+  fecha_nacimiento    DateTime?
+  direccion           String?
+  telefono_alternativo String?
+  is_active           Boolean  @default(true)
+  created_at          DateTime @default(now())
+  user                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model AppointmentType {
