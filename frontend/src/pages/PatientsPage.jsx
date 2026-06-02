@@ -403,7 +403,7 @@ const PatientsPage = () => {
         <>
           <div className="rounded-xl border border-border">
             {/* Header row */}
-            <div className="grid grid-cols-12 gap-1 px-4 py-3 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+            <div className="grid grid-cols-12 gap-1 px-3 py-2 border-b border-border bg-muted/30 text-[11px] font-medium text-muted-foreground">
               <div className="col-span-4">Paciente</div>
               <div className="col-span-2">DNI</div>
               <div className="col-span-2">Cobertura</div>
@@ -416,83 +416,84 @@ const PatientsPage = () => {
             {patients.map((patient) => (
               <div
                 key={patient.id}
-                className="grid grid-cols-12 gap-1 px-4 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors group last:border-b-0 items-center"
+                className="grid grid-cols-12 gap-1 px-3 py-2 border-b border-border/50 hover:bg-muted/30 transition-colors group last:border-b-0 items-center"
               >
                 {/* Paciente: avatar + name + email */}
-                <div className="col-span-4 flex items-center gap-3 min-w-0">
+                <div className="col-span-4 flex items-center gap-2 min-w-0">
                   <Avatar size="sm" className="shrink-0">
-                    <AvatarFallback>
+                    <AvatarFallback className="text-[10px]">
                       {getInitials(
                         patient.user?.first_name,
                         patient.user?.last_name
                       )}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                  <div className="min-w-0 leading-tight">
+                    <p className="text-[13px] font-medium text-foreground truncate leading-tight">
                       {patient.user?.first_name} {patient.user?.last_name}
                       {!patient.is_active && (
-                        <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                        <span className="text-muted-foreground ml-1 text-[11px] font-normal">
                           (Inactivo)
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-[11px] text-muted-foreground truncate leading-tight">
                       {patient.user?.email || '—'}
                     </p>
                   </div>
                 </div>
 
                 {/* DNI */}
-                <div className="col-span-2 text-sm text-foreground truncate">
+                <div className="col-span-2 text-[13px] text-foreground truncate">
                   {patient.dni || '—'}
                 </div>
 
                 {/* Cobertura: badge or italic placeholder */}
                 <div className="col-span-2 truncate">
                   {patient.obra_social ? (
-                    <Badge variant="secondary" className="text-xs">{patient.obra_social}</Badge>
+                    <Badge variant="secondary" className="text-[11px] px-1.5 py-0">{patient.obra_social}</Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground italic">
+                    <span className="text-[11px] text-muted-foreground italic">
                       Sin cobertura
                     </span>
                   )}
                 </div>
 
                 {/* Última Visita */}
-                <div className="col-span-2 text-sm text-foreground truncate">
+                <div className="col-span-2 text-[13px] text-foreground truncate">
                   {patient.last_visit_at ? (
                     formatDate(patient.last_visit_at)
                   ) : (
-                    <span className="text-xs text-muted-foreground italic">
+                    <span className="text-[11px] text-muted-foreground italic">
                       Sin visitas
                     </span>
                   )}
                 </div>
 
                 {/* Próximo Turno */}
-                <div className="col-span-1 flex items-center gap-1 text-sm text-foreground truncate">
+                <div className="col-span-1 flex items-center gap-1 text-[13px] text-foreground truncate">
                   {patient.next_visit_at ? (
                     <>
-                      <CalendarDays className="size-3.5 text-muted-foreground shrink-0" />
+                      <CalendarDays className="size-3 text-muted-foreground shrink-0" />
                       <span className="truncate">{formatDate(patient.next_visit_at)}</span>
                     </>
                   ) : (
-                    <span className="text-xs text-muted-foreground italic">
+                    <span className="text-[11px] text-muted-foreground italic">
                       —
                     </span>
                   )}
                 </div>
 
                 {/* Acciones: visibility + edit — visible on hover */}
-                <div className="col-span-1 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="col-span-1 flex items-center justify-end gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     variant="ghost"
                     size="icon-xs"
                     disabled
                     title="Ver perfil del paciente"
+                    className="size-6"
                   >
-                    <Eye className="size-3.5" />
+                    <Eye className="size-3" />
                   </Button>
 
                   <Button
@@ -505,8 +506,9 @@ const PatientsPage = () => {
                         ? 'Editar paciente'
                         : 'Requiere permisos de administrador'
                     }
+                    className="size-6"
                   >
-                    <Pencil className="size-3.5" />
+                    <Pencil className="size-3" />
                   </Button>
                 </div>
               </div>
