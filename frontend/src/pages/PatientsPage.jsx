@@ -401,118 +401,116 @@ const PatientsPage = () => {
       {/* Table + Pagination */}
       {!loading && !error && patients.length > 0 && (
         <>
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <div className="min-w-[900px]">
-              {/* Header row */}
-              <div className="flex items-center gap-4 px-4 py-3 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
-                <div className="flex-1 min-w-0">Paciente</div>
-                <div className="w-24 shrink-0">DNI</div>
-                <div className="w-32 shrink-0">Cobertura</div>
-                <div className="w-28 shrink-0">Última Visita</div>
-                <div className="w-32 shrink-0">Próximo Turno</div>
-                <div className="w-20 shrink-0 text-right">Acciones</div>
-              </div>
+          <div className="rounded-xl border border-border">
+            {/* Header row */}
+            <div className="grid grid-cols-12 gap-1 px-4 py-3 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+              <div className="col-span-4">Paciente</div>
+              <div className="col-span-2">DNI</div>
+              <div className="col-span-2">Cobertura</div>
+              <div className="col-span-2">Última Visita</div>
+              <div className="col-span-1">Próx. Turno</div>
+              <div className="col-span-1 text-right">Acciones</div>
+            </div>
 
-              {/* Data rows */}
-              {patients.map((patient) => (
-                <div
-                  key={patient.id}
-                  className="flex items-center gap-4 px-4 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors group last:border-b-0"
-                >
-                  {/* Paciente: avatar + name + email */}
-                  <div className="flex-1 min-w-0 flex items-center gap-3">
-                    <Avatar size="sm" className="shrink-0">
-                      <AvatarFallback>
-                        {getInitials(
-                          patient.user?.first_name,
-                          patient.user?.last_name
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {patient.user?.first_name} {patient.user?.last_name}
-                        {!patient.is_active && (
-                          <span className="text-muted-foreground ml-1.5 text-xs font-normal">
-                            (Inactivo)
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {patient.user?.email || '—'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* DNI */}
-                  <div className="w-24 shrink-0 text-sm text-foreground truncate">
-                    {patient.dni || '—'}
-                  </div>
-
-                  {/* Cobertura: badge or italic placeholder */}
-                  <div className="w-32 shrink-0">
-                    {patient.obra_social ? (
-                      <Badge variant="secondary">{patient.obra_social}</Badge>
-                    ) : (
-                      <span className="text-xs text-muted-foreground italic">
-                        Sin cobertura
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Última Visita */}
-                  <div className="w-28 shrink-0 text-sm text-foreground">
-                    {patient.last_visit_at ? (
-                      formatDate(patient.last_visit_at)
-                    ) : (
-                      <span className="text-xs text-muted-foreground italic">
-                        Sin visitas
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Próximo Turno */}
-                  <div className="w-32 shrink-0 flex items-center gap-1.5 text-sm text-foreground">
-                    {patient.next_visit_at ? (
-                      <>
-                        <CalendarDays className="size-3.5 text-muted-foreground shrink-0" />
-                        {formatDate(patient.next_visit_at)}
-                      </>
-                    ) : (
-                      <span className="text-xs text-muted-foreground italic">
-                        Sin turno
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Acciones: visibility + edit — visible on hover */}
-                  <div className="w-20 shrink-0 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      disabled
-                      title="Ver perfil del paciente"
-                    >
-                      <Eye className="size-4" />
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      disabled={!isAdmin}
-                      onClick={() => handleEditPatient(patient)}
-                      title={
-                        isAdmin
-                          ? 'Editar paciente'
-                          : 'Requiere permisos de administrador'
-                      }
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
+            {/* Data rows */}
+            {patients.map((patient) => (
+              <div
+                key={patient.id}
+                className="grid grid-cols-12 gap-1 px-4 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors group last:border-b-0 items-center"
+              >
+                {/* Paciente: avatar + name + email */}
+                <div className="col-span-4 flex items-center gap-3 min-w-0">
+                  <Avatar size="sm" className="shrink-0">
+                    <AvatarFallback>
+                      {getInitials(
+                        patient.user?.first_name,
+                        patient.user?.last_name
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {patient.user?.first_name} {patient.user?.last_name}
+                      {!patient.is_active && (
+                        <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                          (Inactivo)
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {patient.user?.email || '—'}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* DNI */}
+                <div className="col-span-2 text-sm text-foreground truncate">
+                  {patient.dni || '—'}
+                </div>
+
+                {/* Cobertura: badge or italic placeholder */}
+                <div className="col-span-2 truncate">
+                  {patient.obra_social ? (
+                    <Badge variant="secondary" className="text-xs">{patient.obra_social}</Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">
+                      Sin cobertura
+                    </span>
+                  )}
+                </div>
+
+                {/* Última Visita */}
+                <div className="col-span-2 text-sm text-foreground truncate">
+                  {patient.last_visit_at ? (
+                    formatDate(patient.last_visit_at)
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">
+                      Sin visitas
+                    </span>
+                  )}
+                </div>
+
+                {/* Próximo Turno */}
+                <div className="col-span-1 flex items-center gap-1 text-sm text-foreground truncate">
+                  {patient.next_visit_at ? (
+                    <>
+                      <CalendarDays className="size-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{formatDate(patient.next_visit_at)}</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">
+                      —
+                    </span>
+                  )}
+                </div>
+
+                {/* Acciones: visibility + edit — visible on hover */}
+                <div className="col-span-1 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    disabled
+                    title="Ver perfil del paciente"
+                  >
+                    <Eye className="size-3.5" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    disabled={!isAdmin}
+                    onClick={() => handleEditPatient(patient)}
+                    title={
+                      isAdmin
+                        ? 'Editar paciente'
+                        : 'Requiere permisos de administrador'
+                    }
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Pagination Footer */}
