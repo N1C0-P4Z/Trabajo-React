@@ -130,7 +130,7 @@ export const patientRepository = {
     if (desde || hasta) {
       const dateFilter: any = {};
       if (desde) dateFilter.gte = new Date(desde);
-      if (hasta) dateFilter.lte = new Date(hasta);
+      if (hasta) dateFilter.lte = new Date(hasta + 'T23:59:59.999');
 
       AND.push({
         user: {
