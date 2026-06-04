@@ -88,4 +88,4 @@ Trabajo-React/
     └── src/
 ```
 
-Ver [`AGENTS.md`](./AGENTS.md) para documentación completa.
+Ver [`AGENTS.md`](./AGENTS.md) para ver la documentacion completa.
