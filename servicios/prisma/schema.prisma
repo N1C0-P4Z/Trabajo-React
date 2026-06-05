@@ -35,6 +35,10 @@ model Patient {
   fecha_nacimiento    DateTime?
   direccion           String?
   telefono_alternativo String?
+  contacto_emergencia  String?
+  telefono_emergencia  String?
+  alergias            String?
+  notas               String?
   is_active           Boolean  @default(true)
   created_at          DateTime @default(now())
   user                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
