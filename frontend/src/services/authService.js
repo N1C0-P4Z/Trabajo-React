@@ -2,6 +2,23 @@ import { API_BASE } from './apiConfig';
 const API_URL = `${API_BASE}/v1`;
 
 export const authService = {
+  async register(userData) {
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al registrarse');
+    }
+
+    return response.json();
+  },
+
   async login(username, password) {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
