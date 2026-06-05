@@ -1,5 +1,6 @@
 import { hashPassword } from '../utils/bcrypt';
 import { userRepository } from '../repositories/user.repository';
+import { patientRepository } from '../repositories/patient.repository';
 
 // ============================================================
 // CATÁLOGO DE ESPECIALIDADES
@@ -225,6 +226,15 @@ export const userService = {
       is_active: data.is_active !== undefined ? data.is_active : true,
       avatar_url: data.avatar_url || null
     });
+
+    // Auto-crear PatientProfile si el rol es PATIENT
+    if (newUser.role === 'PATIENT') {
+      const dni = (data as any).dni || `PENDIENTE-${newUser.id}`;
+      await patientRepository.create({
+        user_id: newUser.id,
+        dni
+      });
+    }
 
     return newUser;
   },

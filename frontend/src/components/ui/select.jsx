@@ -58,7 +58,8 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
-  position = "item-aligned",
+  position = "popper",
+  side = "bottom",
   align = "center",
   ...props
 }) {
@@ -73,6 +74,7 @@ function SelectContent({
           className
         )}
         position={position}
+        side={side}
         align={align}
         {...props}>
         <SelectScrollUpButton />

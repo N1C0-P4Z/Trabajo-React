@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
+import PatientsPage from './pages/PatientsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
@@ -64,17 +65,7 @@ function App() {
             </RoleProtectedRoute>
           } 
         />
-        <Route 
-          path="/patients" 
-          element={
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground mb-2">Pacientes</h1>
-                <p className="text-muted-foreground">Próximamente...</p>
-              </div>
-            </div>
-          } 
-        />
+        <Route path="/patients" element={<PatientsPage />} />
         <Route path="/appointments" element={<AgendaPage />} />
         <Route 
           path="/insurance" 
