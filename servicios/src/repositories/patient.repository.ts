@@ -25,6 +25,10 @@ const patientPublicSelect = {
   fecha_nacimiento: true,
   direccion: true,
   telefono_alternativo: true,
+  contacto_emergencia: true,
+  telefono_emergencia: true,
+  alergias: true,
+  notas: true,
   is_active: true,
   created_at: true,
   user: {

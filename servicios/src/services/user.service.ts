@@ -175,6 +175,13 @@ export const userService = {
     license_number?: string;
     is_active?: boolean;
     avatar_url?: string;
+    dni?: string;
+    obra_social?: string;
+    numero_afiliado?: string;
+    contacto_emergencia?: string;
+    telefono_emergencia?: string;
+    alergias?: string;
+    notas?: string;
   }) {
     const { email, first_name, last_name, phone, password } = data;
 
@@ -199,6 +206,14 @@ export const userService = {
     const existingPhone = users.find((u: any) => u.phone === validPhone);
     if (existingPhone) {
       throw new Error('El número de teléfono ya está en uso');
+    }
+
+    // Validar DNI si se provee (para role PATIENT)
+    if (data.dni?.trim()) {
+      const existingDni = await patientRepository.findByDni(data.dni.trim());
+      if (existingDni) {
+        throw new Error('El DNI ya está registrado');
+      }
     }
 
     // Validar specialty si se provee
@@ -229,10 +244,16 @@ export const userService = {
 
     // Auto-crear PatientProfile si el rol es PATIENT
     if (newUser.role === 'PATIENT') {
-      const dni = (data as any).dni || `PENDIENTE-${newUser.id}`;
+      const dni = data.dni?.trim() || `PENDIENTE-${newUser.id}`;
       await patientRepository.create({
         user_id: newUser.id,
-        dni
+        dni,
+        obra_social: data.obra_social?.trim() || null,
+        numero_afiliado: data.numero_afiliado?.trim() || null,
+        contacto_emergencia: data.contacto_emergencia?.trim() || null,
+        telefono_emergencia: data.telefono_emergencia?.trim() || null,
+        alergias: data.alergias?.trim() || null,
+        notas: data.notas?.trim() || null,
       });
     }
 

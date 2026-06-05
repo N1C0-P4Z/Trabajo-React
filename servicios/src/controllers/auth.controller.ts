@@ -1,7 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/auth.service';
+import { userService } from '../services/user.service';
 
 export const authController = {
+  async register(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = req.body;
+      // El registro público siempre crea pacientes
+      const newUser = await userService.register({ ...data, role: 'PATIENT' });
+      res.status(201).json(newUser);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
