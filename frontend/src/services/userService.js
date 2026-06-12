@@ -109,6 +109,42 @@ const userService = {
     return await response.json();
   },
 
+  async createUser(data) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al crear usuario');
+    }
+
+    return await response.json();
+  },
+
+  async updateUser(id, data) {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al actualizar usuario');
+    }
+
+    return await response.json();
+  },
+
   async deleteUser(id) {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE',
