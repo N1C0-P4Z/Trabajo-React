@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { getDateRangeForView, navigateDate, formatWeekRange } from '@/lib/dateUtils';
 import { API_BASE } from '@/services/apiConfig';
+import { useAuth } from '@/hooks/useAuth';
 import appointmentService from '@/services/appointmentService';
 import appointmentTypeService from '@/services/appointmentTypeService';
 import CalendarGrid from '@/components/CalendarGrid';
@@ -46,6 +47,7 @@ const VIEWS = [
 ];
 
 const AgendaPage = () => {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('month');
@@ -56,7 +58,11 @@ const AgendaPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const doctorFromUrl = searchParams.get('doctorId');
-  const [selectedDoctorId, setSelectedDoctorId] = useState(doctorFromUrl || 'all');
+  const isPatient = user?.role === 'PATIENT';
+  const isDentist = user?.role === 'DENTIST';
+  const [selectedDoctorId, setSelectedDoctorId] = useState(
+    isDentist ? String(user.id) : (doctorFromUrl || 'all')
+  );
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -76,8 +82,10 @@ const AgendaPage = () => {
     loadTypes();
   }, []);
 
-  // Load patients and doctors with role filter
+  // Load patients and doctors (only if not PATIENT — they don't need to create appointments)
   useEffect(() => {
+    if (isPatient) return;
+
     const loadUsers = async () => {
       try {
         const [patientsRes, doctorsRes] = await Promise.all([
@@ -92,16 +100,24 @@ const AgendaPage = () => {
       }
     };
     loadUsers();
-  }, []);
+  }, [isPatient]);
 
-  // Load appointments when date or view changes
+  // Load appointments when date or view changes — PATIENT uses /me, others use /all
   useEffect(() => {
     const loadAppointments = async () => {
       try {
         setLoading(true);
         setError(null);
         const { start, end } = getDateRangeForView(currentDate, viewMode);
-        const data = await appointmentService.getAll(start, end);
+
+        let data;
+        if (isPatient) {
+          data = await appointmentService.getMyAppointments(start, end);
+        } else if (isDentist) {
+          data = await appointmentService.getAll(start, end, { doctorId: user.id });
+        } else {
+          data = await appointmentService.getAll(start, end);
+        }
         setAppointments(data);
       } catch (err) {
         setError(err.message);
@@ -110,13 +126,14 @@ const AgendaPage = () => {
       }
     };
     loadAppointments();
-  }, [currentDate, viewMode]);
+  }, [currentDate, viewMode, isPatient, isDentist, user?.id]);
 
-  // Filter appointments by selected doctor
+  // Filter appointments by selected doctor (PATIENT always sees only their own)
   const filteredAppointments = useMemo(() => {
+    if (isPatient) return appointments;
     if (selectedDoctorId === 'all') return appointments;
     return appointments.filter((a) => String(a.doctor_id) === selectedDoctorId);
-  }, [appointments, selectedDoctorId]);
+  }, [appointments, selectedDoctorId, isPatient]);
 
   // Navigation handlers
   const handlePrev = useCallback(() => {
@@ -159,8 +176,12 @@ const AgendaPage = () => {
   const handleSave = useCallback(() => {
     // Reload appointments from current range
     const { start, end } = getDateRangeForView(currentDate, viewMode);
-    appointmentService.getAll(start, end).then(setAppointments).catch(() => {});
-  }, [currentDate, viewMode]);
+    if (isPatient) {
+      appointmentService.getMyAppointments(start, end).then(setAppointments).catch(() => {});
+    } else {
+      appointmentService.getAll(start, end).then(setAppointments).catch(() => {});
+    }
+  }, [currentDate, viewMode, isPatient]);
 
   // Heading label based on viewMode
   const currentLabel = useMemo(() => {
@@ -260,20 +281,22 @@ const AgendaPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Doctor filter */}
-            <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Todos los doctores" />
-              </SelectTrigger>
-              <SelectContent position="popper" side="bottom">
-                <SelectItem value="all">Todos los doctores</SelectItem>
-                {doctors.map((doc) => (
-                  <SelectItem key={doc.id} value={String(doc.id)}>
-                    Dr/a. {doc.first_name} {doc.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Doctor filter — hidden for PATIENT */}
+            {!isPatient && (
+              <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Todos los doctores" />
+                </SelectTrigger>
+                <SelectContent position="popper" side="bottom">
+                  <SelectItem value="all">Todos los doctores</SelectItem>
+                  {doctors.map((doc) => (
+                    <SelectItem key={doc.id} value={String(doc.id)}>
+                      Dr/a. {doc.first_name} {doc.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {/* View toggle — segmented control */}
             <div className="flex bg-muted p-0.5 rounded-lg">
@@ -296,13 +319,15 @@ const AgendaPage = () => {
               ))}
             </div>
 
-            {/* Add button */}
-            <button
-              onClick={handleNewAppointment}
-              className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              + Nuevo turno
-            </button>
+            {/* Add button — hidden for PATIENT */}
+            {!isPatient && (
+              <button
+                onClick={handleNewAppointment}
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                + Nuevo turno
+              </button>
+            )}
           </div>
         </div>
 
@@ -318,18 +343,20 @@ const AgendaPage = () => {
           {renderView()}
         </div>
 
-        {/* Appointment Form Dialog */}
-        <AppointmentForm
-          open={dialogOpen}
-          onClose={handleDialogClose}
-          onSave={handleSave}
-          appointment={editingAppointment}
-          types={types}
-          patients={patients}
-          doctors={doctors}
-          appointments={filteredAppointments}
-          doctorId={selectedDoctorId}
-        />
+        {/* Appointment Form Dialog — hidden for PATIENT */}
+        {!isPatient && (
+          <AppointmentForm
+            open={dialogOpen}
+            onClose={handleDialogClose}
+            onSave={handleSave}
+            appointment={editingAppointment}
+            types={types}
+            patients={patients}
+            doctors={doctors}
+            appointments={filteredAppointments}
+            doctorId={selectedDoctorId}
+          />
+        )}
       </div>
 
       {/* Sidebar — Resumen Panel */}
