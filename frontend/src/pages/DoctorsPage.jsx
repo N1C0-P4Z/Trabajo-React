@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import userService from '../services/userService';
+import { useAuth } from '../hooks/useAuth';
 import DoctorCard from '../components/DoctorCard';
 import DoctorFormModal from '../components/DoctorFormModal';
 import {
@@ -23,6 +24,10 @@ import {
 import { toast } from 'sonner';
 
 const DoctorsPage = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'OWNER';
+  const isSecretary = user?.role === 'SECRETARY';
+
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -158,6 +163,7 @@ const DoctorsPage = () => {
               doctor={doctor}
               onToggleActive={() => handleToggleActive(doctor)}
               onDelete={() => handleDeleteClick(doctor)}
+              hideActions={isSecretary}
             />
           ))}
         </div>
