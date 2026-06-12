@@ -88,5 +88,11 @@ export const userRepository = {
     return await prisma.user.delete({
       where: { id }
     });
+  },
+
+  async countByRole(role: string): Promise<number> {
+    return await prisma.user.count({
+      where: { role }
+    });
   }
 };
