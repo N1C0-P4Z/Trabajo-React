@@ -87,7 +87,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   if (err.message === 'No autorizado para editar este usuario' ||
       err.message === 'No autorizado para eliminar usuarios' ||
       err.message === 'No se puede eliminar al administrador del sistema' ||
-      err.message === 'No se puede eliminar a otro administrador' ||
+      err.message === 'No se puede eliminar al último SUPER_ADMIN del sistema' ||
+      err.message === 'No podés eliminar tu propia cuenta' ||
       err.message === 'No autorizado para gestionar tipos de turno' ||
       err.message === 'No autorizado para gestionar doctores' ||
       err.message === 'No autorizado para gestionar pacientes') {

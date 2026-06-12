@@ -23,6 +23,16 @@ export const SPECIALTIES = [
 
 export type Specialty = typeof SPECIALTIES[number];
 
+export const VALID_ROLES = [
+  'SUPER_ADMIN',
+  'OWNER',
+  'DENTIST',
+  'SECRETARY',
+  'PATIENT'
+] as const;
+
+export type ValidRole = typeof VALID_ROLES[number];
+
 // ============================================================
 // VALIDADORES EXPANDIBLES
 // ============================================================
@@ -353,6 +363,14 @@ export const userService = {
       updateData.avatar_url = data.avatar_url || null;
     }
 
+    if (data.role !== undefined) {
+      const validRoles: string[] = [...VALID_ROLES];
+      if (!validRoles.includes(data.role)) {
+        throw new AppError(`Rol inválido. Roles permitidos: ${validRoles.join(', ')}`, 400, 'role');
+      }
+      updateData.role = data.role;
+    }
+
     if (Object.keys(updateData).length === 0) {
       throw new Error('No hay datos para actualizar');
     }
@@ -364,22 +382,35 @@ export const userService = {
   async deleteUser(id: string | number, requestingUser?: { userId: number; role: string }) {
     const userId = typeof id === 'string' ? parseInt(id) : id;
     if (!userId || isNaN(userId)) {
-      throw new Error('ID de usuario inválido');
+      throw new AppError('ID de usuario inválido', 400);
     }
 
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new Error('Usuario no encontrado');
+      throw new AppError('Usuario no encontrado', 404);
     }
 
-    // Rule 1: SUPER_ADMIN and OWNER accounts are NEVER deletable
-    if (user.role === 'SUPER_ADMIN' || user.role === 'OWNER') {
-      throw new Error('No se puede eliminar al administrador del sistema');
+    // Self-deletion guard: a user cannot delete their own account
+    if (requestingUser && requestingUser.userId === userId) {
+      throw new AppError('No podés eliminar tu propia cuenta', 403);
     }
 
-    // Rule 2: Only SUPER_ADMIN and OWNER roles can delete users
+    // Last SUPER_ADMIN guard: cannot delete the last SUPER_ADMIN
+    if (user.role === 'SUPER_ADMIN') {
+      const superAdminCount = await userRepository.countByRole('SUPER_ADMIN');
+      if (superAdminCount <= 1) {
+        throw new AppError('No se puede eliminar al último SUPER_ADMIN del sistema', 403);
+      }
+    }
+
+    // OWNER accounts cannot be deleted
+    if (user.role === 'OWNER') {
+      throw new AppError('No se puede eliminar al administrador del sistema', 403);
+    }
+
+    // Only SUPER_ADMIN and OWNER roles can delete users
     if (!requestingUser || (requestingUser.role !== 'SUPER_ADMIN' && requestingUser.role !== 'OWNER')) {
-      throw new Error('No autorizado para eliminar usuarios');
+      throw new AppError('No autorizado para eliminar usuarios', 403);
     }
 
     await userRepository.delete(userId);
