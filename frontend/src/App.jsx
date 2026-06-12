@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminPage from './pages/AdminPage';
 import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
@@ -49,6 +50,14 @@ function App() {
         </ProtectedRoute>
       }>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route
+          path="/admin"
+          element={
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
+              <AdminPage />
+            </RoleProtectedRoute>
+          }
+        />
         <Route 
           path="/doctors" 
           element={

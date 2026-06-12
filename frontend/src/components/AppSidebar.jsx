@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -24,11 +24,19 @@ const menuItems = [
   { title: 'Pagos', path: '/payments', icon: Wallet },
 ];
 
+const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
+
+const ADMIN_ROLES = ['SUPER_ADMIN', 'OWNER', 'SECRETARY'];
+
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { open, toggleSidebar, isMobile } = useSidebar();
+
+  const visibleMenuItems = user && ADMIN_ROLES.includes(user.role)
+    ? [...menuItems, adminItem]
+    : menuItems;
 
   const handleLogout = async () => {
     await logout();
@@ -80,7 +88,7 @@ const AppSidebar = () => {
               <SidebarGroupLabel>Navegación</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => {
+                  {visibleMenuItems.map((item) => {
                     const active = location.pathname === item.path;
                     return (
                       <SidebarMenuItem key={item.path}>
