@@ -5,16 +5,18 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminPage from './pages/AdminPage';
 import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
 import PatientsPage from './pages/PatientsPage';
+import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <Routes>
@@ -48,11 +50,27 @@ function App() {
           </DashboardLayout>
         </ProtectedRoute>
       }>
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            user?.role === 'PATIENT' 
+              ? <Navigate to="/appointments" replace /> 
+              : <DashboardPage />
+          } 
+        />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/admin"
+          element={
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
+              <AdminPage />
+            </RoleProtectedRoute>
+          }
+        />
         <Route 
           path="/doctors" 
           element={
-            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorsPage />
             </RoleProtectedRoute>
           } 
@@ -60,12 +78,16 @@ function App() {
         <Route 
           path="/doctors/:id" 
           element={
-            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorProfilePage />
             </RoleProtectedRoute>
           } 
         />
-        <Route path="/patients" element={<PatientsPage />} />
+        <Route path="/patients" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
+            <PatientsPage />
+          </RoleProtectedRoute>
+        } />
         <Route path="/appointments" element={<AgendaPage />} />
         <Route 
           path="/insurance" 
