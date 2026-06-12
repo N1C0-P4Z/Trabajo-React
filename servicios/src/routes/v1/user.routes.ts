@@ -10,8 +10,8 @@ router.post('/', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userCon
 router.put('/:id', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.updateUser);
 router.delete('/:id', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.deleteUser);
 
-// Read routes: no restriction (needed by agenda and other modules)
-router.get('/', userController.getAllUsers);
-router.get('/:id', userController.getUserById);
+// Read routes: authentication required
+router.get('/', authenticateToken, userController.getAllUsers);
+router.get('/:id', authenticateToken, userController.getUserById);
 
 export default router;
