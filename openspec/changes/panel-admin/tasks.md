@@ -41,14 +41,14 @@ Chain strategy: pending
 
 ## Phase 2: Frontend Admin Page
 
-- [ ] 2.1 `statsService.js` — Create with `getStats()` fetch wrapper for `GET /v1/stats` [Req 1,3]
+- [x] 2.1 `statsService.js` — Create with `getStats()` fetch wrapper for `GET /v1/stats` [Req 1,3]
 - [ ] 2.2 `userService.js` — Add `createUser(data)` (general) and `updateUser(id, data)` methods [Req 2]
-- [ ] 2.3 `AdminPage.jsx` — Create: 5 KPI cards (patients, doctors, today appointments, pending, income placeholder) [Req 1]
+- [x] 2.3 `AdminPage.jsx` — Create: 5 KPI cards (patients, doctors, today appointments, pending, income placeholder) [Req 1] — KPI cards done in PR 2; user table/CRUD coming in PR 3
 - [ ] 2.4 `AdminPage.jsx` — Add user table: username, email, role, actions (edit/delete) [Req 2]
 - [ ] 2.5 `AdminPage.jsx` — Add "Create User" button + delete confirmation dialog [Req 2,6]
 - [ ] 2.6 `UserFormModal.jsx` — Create: username, email, names, phone, password, role dropdown (all 5 roles), create/edit dual mode [Req 2]
-- [ ] 2.7 `App.jsx` — Add `/admin` route with `RoleProtectedRoute(['SUPER_ADMIN','OWNER','SECRETARY'])` [Req 9]
-- [ ] 2.8 `AppSidebar.jsx` — Conditionally add "Admin" nav item for SUPER_ADMIN, OWNER, SECRETARY [Req 8]
+- [x] 2.7 `App.jsx` — Add `/admin` route with `RoleProtectedRoute(['SUPER_ADMIN','OWNER','SECRETARY'])` [Req 9]
+- [x] 2.8 `AppSidebar.jsx` — Conditionally add "Admin" nav item for SUPER_ADMIN, OWNER, SECRETARY [Req 8]
 
 ## Phase 3: SECRETARY Permissions
 
