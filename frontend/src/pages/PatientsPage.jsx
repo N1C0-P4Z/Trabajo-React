@@ -81,6 +81,9 @@ function formatDate(dateStr) {
 const PatientsPage = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'OWNER';
+  const isSecretary = user?.role === 'SECRETARY';
+  const canEdit = isAdmin || isSecretary;
+  const canDelete = isAdmin;
 
   // Data
   const [patients, setPatients] = useState([]);
@@ -499,10 +502,10 @@ const PatientsPage = () => {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    disabled={!isAdmin}
+                    disabled={!canEdit}
                     onClick={() => handleEditPatient(patient)}
                     title={
-                      isAdmin
+                      canEdit
                         ? 'Editar paciente'
                         : 'Requiere permisos de administrador'
                     }
