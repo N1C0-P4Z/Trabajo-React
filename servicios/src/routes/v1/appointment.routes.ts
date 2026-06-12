@@ -6,6 +6,7 @@ const router = Router();
 
 router.use(authenticateToken);
 
+router.get('/me', appointmentController.getMyAppointments);
 router.get('/', appointmentController.getAll);
 router.get('/:id', appointmentController.getById);
 router.post('/', appointmentController.create);

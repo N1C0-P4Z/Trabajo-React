@@ -25,14 +25,18 @@ const appointmentIncludes = {
 };
 
 export const appointmentRepository = {
-  async findByDateRange(start: Date, end: Date) {
+  async findByDateRange(start: Date, end: Date, patientId?: number, doctorId?: number) {
+    const where: any = {
+      datetime: {
+        gte: start,
+        lte: end
+      }
+    };
+    if (patientId !== undefined) where.patient_id = patientId;
+    if (doctorId !== undefined) where.doctor_id = doctorId;
+
     return await prisma.appointment.findMany({
-      where: {
-        datetime: {
-          gte: start,
-          lte: end
-        }
-      },
+      where,
       include: appointmentIncludes,
       orderBy: { datetime: 'asc' }
     });
