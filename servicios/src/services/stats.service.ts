@@ -32,7 +32,8 @@ export const statsService = {
       totalPatients,
       totalDoctors,
       todayAppointments,
-      pendingAppointments
+      pendingAppointments,
+      monthlyIncome: 0
     };
   }
 };
