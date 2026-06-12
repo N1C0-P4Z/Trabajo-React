@@ -30,12 +30,17 @@ The system MUST provide a seed/backfill routine that creates missing `Patient` p
 - THEN each `PATIENT` user MUST have exactly one `Patient` profile
 
 ### Requirement: Authorization for patients API
-The system MUST require authentication for all `/v1/patients` endpoints. Update and delete operations MUST be restricted to `SUPER_ADMIN` and `OWNER` roles.
+The system MUST require authentication for all `/v1/patients` endpoints. Update operations MUST be restricted to `SUPER_ADMIN`, `OWNER`, and `SECRETARY` roles. Delete operations MUST be restricted to `SUPER_ADMIN` and `OWNER` roles.
 
 #### Scenario: Non-admin cannot update
 - GIVEN an authenticated user with role `DENTIST`
 - WHEN they call `PUT /v1/patients/:id`
 - THEN the response MUST be 403
+
+#### Scenario: SECRETARY can update patients
+- GIVEN an authenticated user with role `SECRETARY`
+- WHEN they call `PUT /v1/patients/:id` with valid data
+- THEN the response MUST be 200 and the patient MUST be updated
 
 ### Requirement: List patients with search, filters and pagination
 `GET /v1/patients` MUST support `search`, `obra_social`, `doctor_id`, `desde`, `hasta`, `estado`, `pagina`, `limite` and return stable pagination.
