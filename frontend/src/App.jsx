@@ -61,7 +61,7 @@ function App() {
         <Route 
           path="/doctors" 
           element={
-            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorsPage />
             </RoleProtectedRoute>
           } 
@@ -69,12 +69,16 @@ function App() {
         <Route 
           path="/doctors/:id" 
           element={
-            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorProfilePage />
             </RoleProtectedRoute>
           } 
         />
-        <Route path="/patients" element={<PatientsPage />} />
+        <Route path="/patients" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
+            <PatientsPage />
+          </RoleProtectedRoute>
+        } />
         <Route path="/appointments" element={<AgendaPage />} />
         <Route 
           path="/insurance" 
