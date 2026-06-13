@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import patientService from '../services/patientService';
 import userService from '../services/userService';
 import { useAuth } from '../hooks/useAuth';
@@ -80,6 +80,7 @@ function formatDate(dateStr) {
 
 const PatientsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'OWNER';
   const isSecretary = user?.role === 'SECRETARY';
   const canEdit = isAdmin || isSecretary;
@@ -492,7 +493,7 @@ const PatientsPage = () => {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    disabled
+                    onClick={() => navigate(`/patients/${patient.id}`)}
                     title="Ver perfil del paciente"
                     className="size-7"
                   >

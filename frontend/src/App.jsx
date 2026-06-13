@@ -10,6 +10,7 @@ import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
 import PatientsPage from './pages/PatientsPage';
+import PatientProfilePage from './pages/PatientProfilePage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
@@ -86,6 +87,11 @@ function App() {
         <Route path="/patients" element={
           <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
             <PatientsPage />
+          </RoleProtectedRoute>
+        } />
+        <Route path="/patients/:id" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'PATIENT']}>
+            <PatientProfilePage />
           </RoleProtectedRoute>
         } />
         <Route path="/appointments" element={<AgendaPage />} />
