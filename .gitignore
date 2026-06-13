@@ -39,3 +39,5 @@ coverage/
 .atl/
 .superpowers/
 skill-registry.md
+openspec/
+specs/
