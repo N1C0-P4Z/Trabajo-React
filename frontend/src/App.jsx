@@ -10,12 +10,13 @@ import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
 import PatientsPage from './pages/PatientsPage';
+import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <Routes>
@@ -49,7 +50,15 @@ function App() {
           </DashboardLayout>
         </ProtectedRoute>
       }>
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            user?.role === 'PATIENT' 
+              ? <Navigate to="/appointments" replace /> 
+              : <DashboardPage />
+          } 
+        />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route
           path="/admin"
           element={

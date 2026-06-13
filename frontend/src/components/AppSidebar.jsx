@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck, User } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -26,7 +26,35 @@ const menuItems = [
 
 const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
 
-const ADMIN_ROLES = ['SUPER_ADMIN', 'OWNER', 'SECRETARY'];
+const ROLE_MENU_ITEMS = {
+  PATIENT: ['/appointments', '/profile'],
+  DENTIST: ['/dashboard', '/doctors', '/patients', '/appointments', '/insurance', '/payments'],
+  SECRETARY: null,
+  OWNER: null,
+  SUPER_ADMIN: null,
+};
+
+const iconMap = {
+  '/dashboard': LayoutDashboard,
+  '/doctors': Stethoscope,
+  '/patients': Users,
+  '/appointments': CalendarDays,
+  '/insurance': Shield,
+  '/payments': Wallet,
+  '/admin': ShieldCheck,
+  '/profile': User,
+};
+
+const titleMap = {
+  '/dashboard': 'Dashboard',
+  '/doctors': 'Doctores',
+  '/patients': 'Pacientes',
+  '/appointments': 'Agenda',
+  '/insurance': 'Obras Sociales',
+  '/payments': 'Pagos',
+  '/admin': 'Admin',
+  '/profile': 'Mi Perfil',
+};
 
 const AppSidebar = () => {
   const location = useLocation();
@@ -34,9 +62,20 @@ const AppSidebar = () => {
   const { user, logout } = useAuth();
   const { open, toggleSidebar, isMobile } = useSidebar();
 
-  const visibleMenuItems = user && ADMIN_ROLES.includes(user.role)
-    ? [...menuItems, adminItem]
-    : menuItems;
+  const visibleMenuItems = (() => {
+    if (!user) return [];
+
+    const allowedPaths = ROLE_MENU_ITEMS[user.role];
+    if (allowedPaths) {
+      return allowedPaths.map((path) => ({
+        title: titleMap[path],
+        path,
+        icon: iconMap[path],
+      }));
+    }
+
+    return [...menuItems, adminItem];
+  })();
 
   const handleLogout = async () => {
     await logout();

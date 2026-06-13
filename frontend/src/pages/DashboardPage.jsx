@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import userService from '../services/userService';
+import { CalendarDays, Stethoscope } from 'lucide-react';
 
 const roleLabels = {
   SUPER_ADMIN: 'Super Admin',
@@ -10,6 +11,31 @@ const roleLabels = {
   PATIENT: 'Paciente',
 };
 
+const RoleCard = ({ user }) => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="text-center max-w-md w-full">
+      <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 mx-auto mb-4">
+        {user.role === 'DENTIST' ? (
+          <Stethoscope className="size-8 text-primary" />
+        ) : (
+          <CalendarDays className="size-8 text-primary" />
+        )}
+      </div>
+      <h1 className="text-2xl font-bold text-foreground mb-2">
+        Bienvenido, {user.first_name}
+      </h1>
+      <p className="text-muted-foreground">
+        {user.role === 'DENTIST'
+          ? 'Consultá tu agenda de turnos desde la sección Agenda.'
+          : 'Gestioná tus turnos desde la sección Agenda.'}
+      </p>
+      <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+        {roleLabels[user.role] || user.role}
+      </div>
+    </div>
+  </div>
+);
+
 const DashboardPage = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
@@ -17,6 +43,11 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // DENTIST and PATIENT see a simple role card instead of user list
+  if (user && (user.role === 'DENTIST' || user.role === 'PATIENT')) {
+    return <RoleCard user={user} />;
+  }
 
   const loadUsers = useCallback(async () => {
     try {
