@@ -29,7 +29,7 @@ const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
 const ROLE_MENU_ITEMS = {
   PATIENT: ['/appointments', '/profile'],
   DENTIST: ['/dashboard', '/doctors', '/patients', '/appointments', '/insurance', '/payments'],
-  SECRETARY: null,
+  SECRETARY: ['/dashboard', '/doctors', '/patients', '/appointments', '/insurance', '/payments'],
   OWNER: null,
   SUPER_ADMIN: null,
 };
