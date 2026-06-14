@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Formulario de registro público para pacientes.
+ * Recolecta datos personales, datos médicos (obra social, alergias, etc.)
+ * y credenciales de acceso. Al registrarse redirige al login.
+ */
+
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"
@@ -57,6 +63,13 @@ const FieldMessage = ({ message }) => {
   );
 };
 
+/**
+ * Formulario de auto-registro para pacientes.
+ * Campos obligatorios: nombre, apellido, usuario, email, teléfono, DNI, contraseña.
+ * Campos opcionales: obra social, número de afiliado, contacto de emergencia, alergias, notas.
+ * 
+ * @returns {JSX.Element}
+ */
 const RegisterForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({

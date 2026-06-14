@@ -1,8 +1,26 @@
+/**
+ * @fileoverview Componente Switch (toggle) basado en Radix UI.
+ * Se usa para activar/desactivar opciones booleanas como el estado de un usuario.
+ */
+
 import * as React from "react"
 import { Switch as SwitchPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Interruptor de tipo toggle (on/off).
+ * 
+ * @param {Object} props
+ * @param {string} [props.className] - Clases CSS adicionales
+ * @param {"default"|"sm"} [props.size="default"] - Tamaño del switch
+ * @param {React.Ref<HTMLButtonElement>} ref
+ * @returns {JSX.Element}
+ * 
+ * @example
+ * <Switch checked={activo} onCheckedChange={setActivo} />
+ * <Switch size="sm" disabled />
+ */
 const Switch = React.forwardRef(({
   className,
   size = "default",

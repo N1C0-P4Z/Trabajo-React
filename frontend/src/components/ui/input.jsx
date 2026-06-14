@@ -1,7 +1,27 @@
+/**
+ * @fileoverview Componente Input reutilizable con estilos de la app.
+ * Envuelve el input nativo de HTML con estilos de Tailwind y soporta
+ * todos los atributos estándar (placeholder, disabled, type, etc.).
+ * Usa forwardRef para integrarse con formularios (react-hook-form) y Radix Slot.
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Campo de texto estilizado.
+ * 
+ * @param {Object} props
+ * @param {string} [props.className] - Clases CSS adicionales
+ * @param {string} [props.type="text"] - Tipo de input (text, email, password, tel, etc.)
+ * @param {React.Ref<HTMLInputElement>} ref - Ref que se pasa al input nativo
+ * @returns {JSX.Element}
+ * 
+ * @example
+ * <Input type="email" placeholder="juan@gmail.com" />
+ * <Input type="password" disabled />
+ */
 const Input = React.forwardRef(({
   className,
   type,

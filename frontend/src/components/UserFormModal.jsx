@@ -1,3 +1,12 @@
+/**
+ * @fileoverview Modal (dialog) para crear o editar usuarios desde el panel de administración.
+ * Solo accesible por SUPER_ADMIN y OWNER. Permite asignar cualquier rol,
+ * cambiar contraseña (solo al crear) y activar/desactivar usuarios.
+ * 
+ * Exporta también {@link ROLE_OPTIONS} y {@link ROLE_LABELS} para reutilizar
+ * en otros componentes.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,6 +42,10 @@ import {
 
 // --- Constants ---
 
+/**
+ * Lista de roles disponibles para crear/editar usuarios.
+ * @type {Array<{value: string, label: string}>}
+ */
 const ROLE_OPTIONS = [
   { value: 'SUPER_ADMIN', label: 'Super Admin' },
   { value: 'OWNER', label: 'Owner' },
@@ -41,6 +54,10 @@ const ROLE_OPTIONS = [
   { value: 'PATIENT', label: 'Paciente' },
 ];
 
+/**
+ * Mapeo de roles a sus etiquetas legibles.
+ * @type {Object<string, string>}
+ */
 const ROLE_LABELS = {
   SUPER_ADMIN: 'Super Admin',
   OWNER: 'Owner',
@@ -74,6 +91,34 @@ const editUserSchema = z.object({
 
 // --- Component ---
 
+/**
+ * Modal para crear o editar usuarios del sistema.
+ * Si recibe la prop `user` se abre en modo edición (sin campo de contraseña).
+ * Si no recibe `user`, se abre en modo creación (con campo de contraseña).
+ * 
+ * @param {Object} props
+ * @param {boolean} props.open - Si el modal está abierto o cerrado
+ * @param {(open: boolean) => void} props.onOpenChange - Función para cambiar el estado de apertura
+ * @param {() => void} [props.onSuccess] - Callback que se ejecuta después de crear/editar exitosamente
+ * @param {Object} [props.user] - Datos del usuario a editar (si no se pasa, se crea uno nuevo)
+ * @param {number} props.user.id
+ * @param {string} props.user.username
+ * @param {string} props.user.email
+ * @param {string} props.user.first_name
+ * @param {string} props.user.last_name
+ * @param {string} props.user.phone
+ * @param {string} props.user.role
+ * @param {boolean} props.user.is_active
+ * @returns {JSX.Element}
+ * 
+ * @example
+ * <UserFormModal
+ *   open={modalOpen}
+ *   onOpenChange={setModalOpen}
+ *   onSuccess={() => recargarUsuarios()}
+ *   user={usuarioAEditar}   // opcional, si no se pasa se crea
+ * />
+ */
 const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);

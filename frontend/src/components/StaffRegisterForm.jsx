@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Formulario de registro público para personal de la clínica
+ * (dentistas y secretarios/as). A diferencia del registro de pacientes, no
+ * pide datos médicos (sin obra social, DNI, alergias, etc.).
+ */
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"
@@ -52,6 +58,13 @@ const FieldMessage = ({ message }) => {
   );
 };
 
+/**
+ * Formulario de auto-registro para personal de la clínica.
+ * Permite elegir entre rol Dentista o Secretario/a.
+ * Solo pide datos básicos: nombre, apellido, usuario, email, teléfono y contraseña.
+ * 
+ * @returns {JSX.Element}
+ */
 const StaffRegisterForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({

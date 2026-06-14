@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Formulario de inicio de sesión con usuario/email y contraseña.
+ * Al hacer submit llama al contexto de autenticación y redirige al dashboard.
+ * También ofrece links para registrarse como paciente o como personal de la clínica.
+ */
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -6,6 +12,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import ThemeToggle from './ThemeToggle';
 
+/**
+ * Formulario de inicio de sesión.
+ * Llama a login() del AuthContext con usuario/email y contraseña.
+ * Muestra errores y estado de carga, y redirige al dashboard al iniciar sesión.
+ * 
+ * @returns {JSX.Element}
+ */
 const LoginForm = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
