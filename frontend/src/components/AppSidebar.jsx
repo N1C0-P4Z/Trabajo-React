@@ -27,7 +27,7 @@ const menuItems = [
 const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
 
 const ROLE_MENU_ITEMS = {
-  PATIENT: ['/appointments', '/profile'],
+  PATIENT: ['/dashboard', '/appointments', '/profile'],
   DENTIST: ['/dashboard', '/patients', '/appointments', '/profile'],
   SECRETARY: ['/dashboard', '/dentists', '/patients', '/appointments', '/insurance', '/payments'],
   OWNER: null,
