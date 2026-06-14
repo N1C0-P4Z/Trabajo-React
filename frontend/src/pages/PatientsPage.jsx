@@ -106,7 +106,9 @@ const PatientsPage = () => {
 
   const [obraSocial, setObraSocial] = useState(ALL);
   const [estado, setEstado] = useState(ALL);
-  const [doctorId, setDoctorId] = useState(ALL);
+  const [doctorId, setDoctorId] = useState(
+    user?.role === 'DENTIST' ? String(user.id) : ALL
+  );
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
 
