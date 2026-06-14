@@ -135,8 +135,12 @@ const PatientDashboard = ({ user }) => {
             Tus próximos turnos
           </p>
         </div>
-        <Button onClick={() => navigate('/appointments?action=new')}>
-          <Plus className="size-4 mr-1.5" />
+        <Button
+          size="lg"
+          className="px-8 py-6 text-lg font-semibold gap-2"
+          onClick={() => navigate('/appointments?action=new')}
+        >
+          <Plus className="size-6" />
           Sacar turno
         </Button>
       </div>
@@ -149,8 +153,12 @@ const PatientDashboard = ({ user }) => {
           <p className="text-muted-foreground mb-4">
             No tenés turnos programados. ¡Sacá uno nuevo!
           </p>
-          <Button onClick={() => navigate('/appointments?action=new')}>
-            <Plus className="size-4 mr-1.5" />
+          <Button
+            size="lg"
+            className="px-8 py-6 text-lg font-semibold gap-2"
+            onClick={() => navigate('/appointments?action=new')}
+          >
+            <Plus className="size-6" />
             Sacar turno
           </Button>
         </div>
