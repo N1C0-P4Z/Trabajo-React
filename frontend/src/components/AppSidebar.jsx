@@ -126,7 +126,7 @@ const AppSidebar = () => {
             <SidebarGroup>
               <SidebarGroupLabel>Navegación</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="space-y-2">
                   {visibleMenuItems.map((item) => {
                     const active = location.pathname === item.path;
                     return (
@@ -136,7 +136,7 @@ const AppSidebar = () => {
                           isActive={active}
                           tooltip={item.title}
                           onClick={handleNavClick}
-                          className={`py-4 text-base ${active ? '!bg-primary/10 !text-primary hover:!bg-primary/15' : ''}`}
+                          className={`py-6 text-base ${active ? '!bg-primary/10 !text-primary hover:!bg-primary/15' : ''}`}
                         >
                           <Link to={item.path}>
                             <item.icon className="size-5" />
