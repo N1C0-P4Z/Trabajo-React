@@ -73,8 +73,8 @@ const DoctorProfilePage = () => {
         <p className="text-muted-foreground mb-4">
           {error || 'Doctor no encontrado.'}
         </p>
-        <Button variant="outline" onClick={() => navigate('/doctors')}>
-          Volver a Doctores
+        <Button variant="outline" onClick={() => navigate('/dentists')}>
+          Volver a Dentistas
         </Button>
       </div>
     );
@@ -95,7 +95,7 @@ const DoctorProfilePage = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/doctors">Doctores</Link>
+              <Link to="/dentists">Dentistas</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -149,7 +149,7 @@ const DoctorProfilePage = () => {
             >
               Ver Agenda
             </Button>
-            <Button variant="outline" onClick={() => navigate('/doctors')}>
+            <Button variant="outline" onClick={() => navigate('/dentists')}>
               Volver
             </Button>
           </div>

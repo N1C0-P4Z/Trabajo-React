@@ -149,7 +149,7 @@ const DoctorCard = ({ doctor, onToggleActive, onDelete, hideActions }) => {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => navigate(`/doctors/${doctor.id}`)}
+            onClick={() => navigate(`/dentists/${doctor.id}`)}
             title="Ver Perfil"
           >
             <User className="size-4" />

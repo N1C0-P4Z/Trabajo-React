@@ -115,15 +115,15 @@ const DoctorsPage = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Doctores</BreadcrumbPage>
+            <BreadcrumbPage>Dentistas</BreadcrumbPage>
+
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Doctores</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Dentistas</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Gestioná el equipo de odontólogos de la clínica
           </p>
