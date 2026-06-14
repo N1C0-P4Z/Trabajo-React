@@ -382,11 +382,11 @@ const AdminDashboard = () => {
             ))}
           </div>
           <Button
-            variant="ghost"
-            className="w-full"
+            variant="default"
+            className="w-full py-5 text-base font-semibold"
             onClick={() => navigate('/admin')}
           >
-            Ir al Panel de Administración <ArrowRight className="size-4 ml-1" />
+            Ir al Panel de Administración <ArrowRight className="size-5 ml-1.5" />
           </Button>
         </>
       )}
