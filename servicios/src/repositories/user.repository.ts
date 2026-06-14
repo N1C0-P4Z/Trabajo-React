@@ -52,6 +52,12 @@ export const userRepository = {
     });
   },
 
+  async findByIdWithPassword(id: number) {
+    return await prisma.user.findUnique({
+      where: { id }
+    });
+  },
+
   async findAll(role?: string) {
     const where: any = {};
     if (role) {

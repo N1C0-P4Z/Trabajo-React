@@ -1,4 +1,4 @@
-import { hashPassword } from '../utils/bcrypt';
+import { hashPassword, comparePassword } from '../utils/bcrypt';
 import { userRepository } from '../repositories/user.repository';
 import { patientRepository } from '../repositories/patient.repository';
 import { AppError } from '../utils/errors';
@@ -309,6 +309,30 @@ export const userService = {
     }
 
     const updateData: any = {};
+
+    // Password change
+    if (data.new_password !== undefined && data.new_password !== null && data.new_password !== '') {
+      const currentPassword = data.current_password;
+      if (!currentPassword) {
+        throw new AppError('Debés ingresar tu contraseña actual', 400, 'current_password');
+      }
+
+      const userWithPassword = await userRepository.findByIdWithPassword(userId);
+      if (!userWithPassword?.password_hash) {
+        throw new AppError('Usuario no encontrado', 404);
+      }
+
+      const isValid = await comparePassword(currentPassword, userWithPassword.password_hash);
+      if (!isValid) {
+        throw new AppError('La contraseña actual no es correcta', 400, 'current_password');
+      }
+
+      if (data.new_password.length < 6) {
+        throw new AppError('La nueva contraseña debe tener al menos 6 caracteres', 400, 'new_password');
+      }
+
+      updateData.password_hash = await hashPassword(data.new_password);
+    }
 
     if (data.first_name !== undefined) {
       updateData.first_name = validateName(data.first_name, 'nombre', 'first_name');

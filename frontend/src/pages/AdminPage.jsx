@@ -33,7 +33,7 @@ import {
 
 const kpiConfig = [
   { key: 'totalPatients', label: 'Pacientes', icon: Users, color: 'text-blue-500' },
-  { key: 'totalDoctors', label: 'Doctores', icon: Stethoscope, color: 'text-emerald-500' },
+  { key: 'totalDoctors', label: 'Dentistas', icon: Stethoscope, color: 'text-emerald-500' },
   { key: 'todayAppointments', label: 'Turnos hoy', icon: Calendar, color: 'text-amber-500' },
   { key: 'pendingAppointments', label: 'Pendientes', icon: Clock, color: 'text-orange-500' },
   { key: 'monthlyIncome', label: 'Ingresos', icon: DollarSign, color: 'text-violet-500', placeholder: true },

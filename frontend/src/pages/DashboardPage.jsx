@@ -6,7 +6,7 @@ import { CalendarDays, Stethoscope } from 'lucide-react';
 const roleLabels = {
   SUPER_ADMIN: 'Super Admin',
   OWNER: 'Dueño',
-  DENTIST: 'Odontólogo',
+  DENTIST: 'Dentista',
   SECRETARY: 'Secretario',
   PATIENT: 'Paciente',
 };

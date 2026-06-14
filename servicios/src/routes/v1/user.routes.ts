@@ -7,7 +7,7 @@ const router = Router();
 
 // Mutating routes: only SUPER_ADMIN and OWNER can create/update/delete users
 router.post('/', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.register);
-router.put('/:id', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.updateUser);
+router.put('/:id', authenticateToken, userController.updateUser);
 router.delete('/:id', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.deleteUser);
 
 // Read routes: authentication required

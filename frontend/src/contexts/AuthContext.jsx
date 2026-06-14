@@ -57,6 +57,15 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+    }
+  }, []);
+
   // isAuthenticated helper
   const isAuthenticated = useCallback(() => {
     return authService.isAuthenticated(user);
@@ -66,6 +75,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    refreshUser,
     isAuthenticated,
     loading,
     error,
