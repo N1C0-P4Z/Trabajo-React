@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ThemeToggle from './ThemeToggle';
-import { authService } from '../services/authService';
+import { authService, FieldError } from '../services/authService';
 
 const OBRA_SOCIAL_OPTIONS = [
   'Ninguna',
@@ -44,6 +44,19 @@ const SectionDivider = ({ label }) => (
   </div>
 );
 
+const ReqAsterisk = () => (
+  <span className="text-destructive ml-0.5">*</span>
+);
+
+const FieldMessage = ({ message }) => {
+  if (!message) return null;
+  return (
+    <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">
+      {message}
+    </div>
+  );
+};
+
 const RegisterForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -68,39 +81,39 @@ const RegisterForm = () => {
   const validateField = (name, value) => {
     switch (name) {
       case 'first_name':
-        if (!value.trim()) return 'El nombre es requerido';
-        if (value.trim().length < 2) return 'El nombre debe tener al menos 2 caracteres';
+        if (!value.trim()) return 'Completá tu nombre';
+        if (value.trim().length < 2) return 'Mínimo 2 caracteres';
         break;
       case 'last_name':
-        if (!value.trim()) return 'El apellido es requerido';
-        if (value.trim().length < 2) return 'El apellido debe tener al menos 2 caracteres';
+        if (!value.trim()) return 'Completá tu apellido';
+        if (value.trim().length < 2) return 'Mínimo 2 caracteres';
         break;
       case 'username':
-        if (!value.trim()) return 'El nombre de usuario es requerido';
-        if (value.trim().length < 3) return 'El nombre de usuario debe tener al menos 3 caracteres';
-        if (!/^[a-zA-Z0-9_.-]+$/.test(value.trim())) return 'Solo letras, números, puntos, guiones y guiones bajos';
+        if (!value.trim()) return 'Completá tu nombre de usuario';
+        if (value.trim().length < 3) return 'Mínimo 3 caracteres';
+        if (!/^[a-zA-Z0-9_.-]+$/.test(value.trim())) return 'Solo letras, números, puntos y guiones';
         break;
       case 'email':
-        if (!value.trim()) return 'El correo electrónico es requerido';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Formato de email inválido';
+        if (!value.trim()) return 'Completá tu correo electrónico';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'El formato del email no es válido';
         break;
       case 'phone':
-        if (!value.trim()) return 'El teléfono es requerido';
-        if (!/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato argentino inválido. Ej: +54 9 11 1234-5678';
+        if (!value.trim()) return 'Completá tu teléfono';
+        if (!/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato inválido. Ej: +54 9 11 1234-5678';
         break;
       case 'dni':
-        if (!value.trim()) return 'El DNI es requerido';
+        if (!value.trim()) return 'Completá tu DNI';
         if (!/^\d{6,8}$/.test(value.trim())) return 'El DNI debe tener entre 6 y 8 dígitos';
         break;
       case 'telefono_emergencia':
-        if (value.trim() && !/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato argentino inválido. Ej: +54 9 11 1234-5678';
+        if (value.trim() && !/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato inválido. Ej: +54 9 11 1234-5678';
         break;
       case 'password':
-        if (!value) return 'La contraseña es requerida';
-        if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+        if (!value) return 'Completá tu contraseña';
+        if (value.length < 6) return 'Mínimo 6 caracteres';
         break;
       case 'confirmPassword':
-        if (!value) return 'Debes repetir la contraseña';
+        if (!value) return 'Repetí tu contraseña';
         if (value !== formData.password) return 'Las contraseñas no coinciden';
         break;
       default:
@@ -121,7 +134,6 @@ const RegisterForm = () => {
     setFormData(prev => ({ ...prev, obra_social: value }));
     setErrors(prev => ({ ...prev, obra_social: null }));
 
-    // Si el usuario elige "Ninguna", limpiar número de afiliado
     if (value === 'Ninguna') {
       setFormData(prev => ({ ...prev, numero_afiliado: '' }));
     }
@@ -131,6 +143,14 @@ const RegisterForm = () => {
     const { id, value } = e.target;
     const fieldError = validateField(id, value);
     setErrors(prev => ({ ...prev, [id]: fieldError }));
+  };
+
+  const clearFieldErrors = () => {
+    setErrors(prev => {
+      const next = { ...prev };
+      delete next.submit;
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -147,6 +167,7 @@ const RegisterForm = () => {
       return;
     }
 
+    clearFieldErrors();
     setLoading(true);
 
     try {
@@ -172,7 +193,13 @@ const RegisterForm = () => {
 
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
-      setErrors({ submit: err.message });
+      if (err instanceof FieldError && err.field) {
+        // Error específico de un campo → mostrarlo bajo ese campo
+        setErrors(prev => ({ ...prev, [err.field]: err.message }));
+      } else {
+        // Error general → mostrarlo al final del formulario
+        setErrors(prev => ({ ...prev, submit: err.message }));
+      }
     } finally {
       setLoading(false);
     }
@@ -198,7 +225,9 @@ const RegisterForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Nombre */}
           <div className="space-y-2">
-            <Label htmlFor="first_name" className="text-sm font-medium text-card-foreground">Nombre</Label>
+            <Label htmlFor="first_name" className="text-sm font-medium text-card-foreground">
+              Nombre<ReqAsterisk />
+            </Label>
             <Input
               id="first_name"
               type="text"
@@ -211,14 +240,14 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.first_name && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.first_name}</div>
-            )}
+            <FieldMessage message={errors.first_name} />
           </div>
 
           {/* Apellido */}
           <div className="space-y-2">
-            <Label htmlFor="last_name" className="text-sm font-medium text-card-foreground">Apellido</Label>
+            <Label htmlFor="last_name" className="text-sm font-medium text-card-foreground">
+              Apellido<ReqAsterisk />
+            </Label>
             <Input
               id="last_name"
               type="text"
@@ -231,16 +260,16 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.last_name && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.last_name}</div>
-            )}
+            <FieldMessage message={errors.last_name} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Nombre de usuario */}
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-sm font-medium text-card-foreground">Nombre de usuario</Label>
+            <Label htmlFor="username" className="text-sm font-medium text-card-foreground">
+              Nombre de usuario<ReqAsterisk />
+            </Label>
             <Input
               id="username"
               type="text"
@@ -253,14 +282,14 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.username && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.username}</div>
-            )}
+            <FieldMessage message={errors.username} />
           </div>
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-card-foreground">Correo electrónico</Label>
+            <Label htmlFor="email" className="text-sm font-medium text-card-foreground">
+              Correo electrónico<ReqAsterisk />
+            </Label>
             <Input
               id="email"
               type="email"
@@ -272,15 +301,15 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.email && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.email}</div>
-            )}
+            <FieldMessage message={errors.email} />
           </div>
         </div>
 
         {/* Teléfono */}
         <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-card-foreground">Teléfono</Label>
+          <Label htmlFor="phone" className="text-sm font-medium text-card-foreground">
+            Teléfono<ReqAsterisk />
+          </Label>
           <Input
             id="phone"
             type="tel"
@@ -293,9 +322,7 @@ const RegisterForm = () => {
             disabled={loading}
             className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
           />
-          {errors.phone && (
-            <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.phone}</div>
-          )}
+          <FieldMessage message={errors.phone} />
         </div>
 
         {/* ──────── DATOS MÉDICOS ──────── */}
@@ -304,7 +331,9 @@ const RegisterForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* DNI */}
           <div className="space-y-2">
-            <Label htmlFor="dni" className="text-sm font-medium text-card-foreground">DNI</Label>
+            <Label htmlFor="dni" className="text-sm font-medium text-card-foreground">
+              DNI<ReqAsterisk />
+            </Label>
             <Input
               id="dni"
               type="text"
@@ -317,9 +346,7 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.dni && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.dni}</div>
-            )}
+            <FieldMessage message={errors.dni} />
           </div>
 
           {/* Obra Social */}
@@ -377,6 +404,7 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
+            <FieldMessage message={errors.contacto_emergencia} />
           </div>
 
           {/* Teléfono de Emergencia */}
@@ -394,9 +422,7 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.telefono_emergencia && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.telefono_emergencia}</div>
-            )}
+            <FieldMessage message={errors.telefono_emergencia} />
           </div>
         </div>
 
@@ -434,7 +460,9 @@ const RegisterForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Contraseña */}
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-card-foreground">Contraseña</Label>
+            <Label htmlFor="password" className="text-sm font-medium text-card-foreground">
+              Contraseña<ReqAsterisk />
+            </Label>
             <Input
               id="password"
               type="password"
@@ -447,14 +475,14 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.password && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.password}</div>
-            )}
+            <FieldMessage message={errors.password} />
           </div>
 
           {/* Repetir contraseña */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium text-card-foreground">Repetir contraseña</Label>
+            <Label htmlFor="confirmPassword" className="text-sm font-medium text-card-foreground">
+              Repetir contraseña<ReqAsterisk />
+            </Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -467,13 +495,11 @@ const RegisterForm = () => {
               disabled={loading}
               className="h-9 bg-input border-border text-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            {errors.confirmPassword && (
-              <div className="bg-destructive/10 text-destructive text-xs p-2 rounded-xl">{errors.confirmPassword}</div>
-            )}
+            <FieldMessage message={errors.confirmPassword} />
           </div>
         </div>
 
-        {/* Error submit (errores del backend) */}
+        {/* Error general del submit */}
         {errors.submit && (
           <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-xl">
             {errors.submit}
