@@ -1,6 +1,14 @@
 import { API_BASE } from './apiConfig';
 const API_URL = `${API_BASE}/v1`;
 
+export class FieldError extends Error {
+  constructor(message, field) {
+    super(message);
+    this.name = 'FieldError';
+    this.field = field || null;
+  }
+}
+
 export const authService = {
   async register(userData) {
     const response = await fetch(`${API_URL}/auth/register`, {
@@ -12,8 +20,11 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al registrarse');
+      const data = await response.json();
+      throw new FieldError(
+        data.error || 'Error al registrarse',
+        data.field || null
+      );
     }
 
     return response.json();
