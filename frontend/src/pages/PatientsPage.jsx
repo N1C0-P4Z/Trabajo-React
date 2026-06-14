@@ -83,6 +83,7 @@ const PatientsPage = () => {
   const navigate = useNavigate();
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'OWNER';
   const isSecretary = user?.role === 'SECRETARY';
+  const isDentist = user?.role === 'DENTIST';
   const canEdit = isAdmin || isSecretary;
   const canDelete = isAdmin;
 
@@ -140,17 +141,20 @@ const PatientsPage = () => {
     []
   );
 
-  // Load doctors once for the dropdown
+  // Load doctors once for the dropdown (DENTIST doesn't need it)
   useEffect(() => {
+    if (isDentist) return; // DENTIST doesn't need doctor list
     userService
       .getDoctors()
       .then(setDoctors)
       .catch(() => {}); // fail silently — dropdown stays empty
   }, []);
 
-  // Initial patient load
+  // Initial patient load (DENTIST auto-filters to their own patients)
   useEffect(() => {
-    loadPatients({}, 1);
+    const initialFilters = {};
+    if (isDentist) initialFilters.doctor_id = user.id;
+    loadPatients(initialFilters, 1);
   }, [loadPatients]);
 
   // --- Filter handlers ---
@@ -338,23 +342,25 @@ const PatientsPage = () => {
           </SelectContent>
         </Select>
 
-        {/* Doctor */}
-        <Select
-          value={doctorId}
-          onValueChange={(v) => handleFilterChange('doctorId', v)}
-        >
-          <SelectTrigger className="w-40 h-7 text-xs">
-            <SelectValue placeholder="Doctor/a" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Todos los doctores</SelectItem>
-            {doctors.map((doc) => (
-              <SelectItem key={doc.id} value={String(doc.id)}>
-                {doc.first_name} {doc.last_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Doctor filter — hidden for DENTIST, they see only their patients */}
+        {!isDentist && (
+          <Select
+            value={doctorId}
+            onValueChange={(v) => handleFilterChange('doctorId', v)}
+          >
+            <SelectTrigger className="w-40 h-7 text-xs">
+              <SelectValue placeholder="Dentista/a" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Todos los dentistas</SelectItem>
+              {doctors.map((doc) => (
+                <SelectItem key={doc.id} value={String(doc.id)}>
+                  {doc.first_name} {doc.last_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {/* Date range */}
         <div className="flex items-center gap-1.5">

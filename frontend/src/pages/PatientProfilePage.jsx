@@ -157,6 +157,31 @@ const PatientProfilePage = () => {
     );
   }
 
+  // DENTIST scope guard — check if this patient has appointments with this dentist
+  if (!loading && !appointmentsLoading && patient && user?.role === 'DENTIST') {
+    const hasAppointmentWithMe = appointments.some(
+      (a) => a.doctor_id === user.id
+    );
+    if (!hasAppointmentWithMe) {
+      return (
+        <div className="text-center py-16">
+          <div className="inline-flex size-16 items-center justify-center rounded-full bg-destructive/10 mx-auto mb-4">
+            <svg className="size-8 text-destructive" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Acceso restringido</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            No tenés turnos registrados con este paciente.
+          </p>
+          <Button variant="outline" onClick={() => navigate('/patients')}>
+            Volver a Pacientes
+          </Button>
+        </div>
+      );
+    }
+  }
+
   // --- Loading state ---
 
   if (loading) {
