@@ -238,11 +238,11 @@ const DentistDashboard = ({ user }) => {
 
       {!loading && !error && (
         <Button
-          variant="ghost"
-          className="w-full"
+          variant="default"
+          className="w-full py-5 text-base font-semibold"
           onClick={() => navigate('/appointments')}
         >
-          Ver agenda completa <ArrowRight className="size-4 ml-1" />
+          Ver agenda completa <ArrowRight className="size-5 ml-1.5" />
         </Button>
       )}
     </div>
