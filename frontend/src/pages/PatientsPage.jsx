@@ -282,7 +282,9 @@ const PatientsPage = () => {
           Directorio de Pacientes
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Gestioná la información administrativa de los pacientes de la clínica
+          {isDentist
+            ? 'Pacientes que se atienden o se atendieron con vos'
+            : 'Gestioná la información administrativa de los pacientes de la clínica'}
         </p>
       </div>
 
