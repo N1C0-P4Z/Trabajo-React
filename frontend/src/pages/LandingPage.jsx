@@ -24,7 +24,7 @@ const LandingPage = () => {
 
           <div className="mt-12 flex flex-col sm:flex-row justify-center gap-4">
             <Link
-              to="/login"
+              to="/register-staff"
               className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +45,7 @@ const LandingPage = () => {
           </div>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            ¿Ya sos paciente?{' '}
+            ¿Ya tenés cuenta?{' '}
             <Link to="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
               Iniciá sesión acá
             </Link>

@@ -83,15 +83,27 @@ const LoginForm = () => {
           {loading ? 'Ingresando...' : 'Ingresar'}
         </Button>
 
-        {/* No tenes cuenta, registrate! */}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors"
-          onClick={() => navigate('/register')}
-        >
-          ¿No tenés cuenta? Registrate
-        </Button>
+        <div className="text-center space-y-2 pt-2">
+          <p className="text-xs text-muted-foreground">¿No tenés cuenta?</p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors text-xs"
+              onClick={() => navigate('/register')}
+            >
+              Soy Paciente
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors text-xs"
+              onClick={() => navigate('/register-staff')}
+            >
+              Soy Personal
+            </Button>
+          </div>
+        </div>
       </form>
     </div>
   );

@@ -29,14 +29,15 @@ function SelectValue({
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
-function SelectTrigger({
+const SelectTrigger = React.forwardRef(({
   className,
   size = "default",
   children,
   ...props
-}) {
+}, ref) => {
   return (
     <SelectPrimitive.Trigger
+      ref={ref}
       data-slot="select-trigger"
       data-size={size}
       className={cn(
@@ -53,7 +54,7 @@ function SelectTrigger({
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
-}
+})
 
 function SelectContent({
   className,

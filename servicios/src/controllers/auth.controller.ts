@@ -6,8 +6,11 @@ export const authController = {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const data = req.body;
-      // El registro público siempre crea pacientes
-      const newUser = await userService.register({ ...data, role: 'PATIENT' });
+      const ALLOWED_SELF_REGISTER_ROLES = ['PATIENT', 'DENTIST', 'SECRETARY'];
+      const role = data.role && ALLOWED_SELF_REGISTER_ROLES.includes(data.role)
+        ? data.role
+        : 'PATIENT';
+      const newUser = await userService.register({ ...data, role });
       res.status(201).json(newUser);
     } catch (error) {
       next(error);

@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -69,7 +68,6 @@ const editUserSchema = z.object({
   first_name: z.string().min(2, 'Mínimo 2 caracteres').max(50),
   last_name: z.string().min(2, 'Mínimo 2 caracteres').max(50),
   phone: z.string().min(6, 'Teléfono inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres').optional().or(z.literal('')),
   role: z.string().min(1, 'Seleccioná un rol'),
   is_active: z.boolean().default(true),
 });
@@ -95,7 +93,6 @@ const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
     },
   });
 
-  // Reset form when modal opens/closes or user changes
   useEffect(() => {
     if (open) {
       if (user) {
@@ -105,7 +102,6 @@ const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
           first_name: user.first_name || '',
           last_name: user.last_name || '',
           phone: user.phone || '',
-          password: '',
           role: user.role || 'PATIENT',
           is_active: user.is_active !== false,
         });
@@ -131,10 +127,6 @@ const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
 
     try {
       const payload = { ...data };
-      // Remove empty password on edit
-      if (isEditing && !payload.password) {
-        delete payload.password;
-      }
 
       if (isEditing) {
         await userService.updateUser(user.id, payload);
@@ -164,7 +156,7 @@ const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
           <DialogTitle>{isEditing ? 'Editar Usuario' : 'Crear Usuario'}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? 'Modificá los datos del usuario. Dejá la contraseña vacía para no cambiarla.'
+              ? 'Modificá los datos del usuario.'
               : 'Completá los datos para registrar un nuevo usuario en el sistema.'}
           </DialogDescription>
         </DialogHeader>
@@ -253,28 +245,26 @@ const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
               )}
             />
 
-            {/* Password */}
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {isEditing ? 'Contraseña (opcional)' : 'Contraseña'}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder={
-                        isEditing ? 'Dejar vacío para no cambiar' : 'Mínimo 6 caracteres'
-                      }
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Password — only for new users */}
+            {!isEditing && (
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contraseña</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Mínimo 6 caracteres"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Role (Select) */}
             <FormField
@@ -305,21 +295,27 @@ const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
               )}
             />
 
-            {/* is_active Switch */}
+            {/* Estado */}
             <FormField
               control={form.control}
               name="is_active"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-md border border-border p-3">
-                  <div>
-                    <FormLabel className="text-xs font-medium cursor-pointer">Activo</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+                <FormItem>
+                  <FormLabel>Estado</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === 'true')}
+                    value={field.value ? 'true' : 'false'}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Activo</SelectItem>
+                      <SelectItem value="false">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />
