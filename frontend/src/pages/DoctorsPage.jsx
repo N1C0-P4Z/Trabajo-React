@@ -125,12 +125,9 @@ const DoctorsPage = () => {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Dentistas</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Gestioná el equipo de odontólogos de la clínica
+            Gestioná el equipo de dentistas de la clínica
           </p>
         </div>
-
-
-      </div>
 
       {/* Error state */}
       {error && (

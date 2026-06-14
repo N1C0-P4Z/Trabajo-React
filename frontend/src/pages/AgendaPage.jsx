@@ -82,9 +82,22 @@ const AgendaPage = () => {
     loadTypes();
   }, []);
 
-  // Load patients and doctors (only if not PATIENT — they don't need to create appointments)
+  // Auto-open dialog when ?action=new is present
   useEffect(() => {
-    if (isPatient) return;
+    if (searchParams.get('action') === 'new') {
+      setDialogOpen(true);
+    }
+  }, [searchParams]);
+
+  // Load patients and doctors — PATIENT only needs doctor list for self-booking
+  useEffect(() => {
+    if (isPatient) {
+      fetch(`${API_BASE}/v1/users?role=DENTIST`, { credentials: 'include' })
+        .then((res) => (res.ok ? res.json() : []))
+        .then(setDoctors)
+        .catch(() => {});
+      return;
+    }
 
     const loadUsers = async () => {
       try {
@@ -319,8 +332,8 @@ const AgendaPage = () => {
               ))}
             </div>
 
-            {/* Add button — hidden for PATIENT */}
-            {!isPatient && (
+            {/* Add button — visible for all except DENTIST (they use the agenda directly) */}
+            {!isDentist && (
               <button
                 onClick={handleNewAppointment}
                 className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -343,8 +356,8 @@ const AgendaPage = () => {
           {renderView()}
         </div>
 
-        {/* Appointment Form Dialog — hidden for PATIENT */}
-        {!isPatient && (
+        {/* Appointment Form Dialog — visible for all except DENTIST */}
+        {!isDentist && (
           <AppointmentForm
             open={dialogOpen}
             onClose={handleDialogClose}
@@ -355,6 +368,7 @@ const AgendaPage = () => {
             doctors={doctors}
             appointments={filteredAppointments}
             doctorId={selectedDoctorId}
+            selfPatientId={isPatient ? user.id : null}
           />
         )}
       </div>
