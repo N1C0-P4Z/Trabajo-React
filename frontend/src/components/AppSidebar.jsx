@@ -136,10 +136,10 @@ const AppSidebar = () => {
                           isActive={active}
                           tooltip={item.title}
                           onClick={handleNavClick}
-                          className={active ? '!bg-primary/10 !text-primary hover:!bg-primary/15' : ''}
+                          className={`py-3 text-sm ${active ? '!bg-primary/10 !text-primary hover:!bg-primary/15' : ''}`}
                         >
                           <Link to={item.path}>
-                            <item.icon className="size-4" />
+                            <item.icon className="size-5" />
                             <span>{item.title}</span>
                           </Link>
                         </SidebarMenuButton>
