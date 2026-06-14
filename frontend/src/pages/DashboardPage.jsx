@@ -298,13 +298,22 @@ const SecretaryDashboard = () => {
             Turnos del día de hoy
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => navigate('/appointments')}>
-            <Plus className="size-4 mr-1.5" />
+        <div className="flex gap-3">
+          <Button
+            size="default"
+            className="px-6 py-5 text-base font-semibold"
+            onClick={() => navigate('/appointments')}
+          >
+            <Plus className="size-5 mr-2" />
             Nuevo turno
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate('/patients')}>
-            <Users className="size-4 mr-1.5" />
+          <Button
+            size="default"
+            variant="outline"
+            className="px-6 py-5 text-base font-semibold"
+            onClick={() => navigate('/patients')}
+          >
+            <Users className="size-5 mr-2" />
             Pacientes
           </Button>
         </div>
