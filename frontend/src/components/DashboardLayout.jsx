@@ -1,9 +1,27 @@
+/**
+ * @fileoverview Layout principal de la aplicación una vez autenticado.
+ * Contiene la barra lateral (AppSidebar), la barra superior con toggle de tema
+ * y el área de contenido donde se renderizan las páginas protegidas.
+ */
+
 import React from 'react';
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import AppSidebar from './AppSidebar';
 import ThemeToggle from './ThemeToggle';
 
+/**
+ * Layout con sidebar, header y área de contenido principal.
+ * 
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - La página o contenido a mostrar en el área principal
+ * @returns {JSX.Element}
+ * 
+ * @example
+ * <DashboardLayout>
+ *   <DashboardPage />
+ * </DashboardLayout>
+ */
 const DashboardLayout = ({ children }) => {
   return (
     <SidebarProvider defaultOpen={true}>

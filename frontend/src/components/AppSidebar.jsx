@@ -13,22 +13,69 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck, User } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { title: 'Doctores', path: '/doctors', icon: Stethoscope },
+  { title: 'Dentistas', path: '/dentists', icon: Stethoscope },
   { title: 'Pacientes', path: '/patients', icon: Users },
   { title: 'Agenda', path: '/appointments', icon: CalendarDays },
   { title: 'Obras Sociales', path: '/insurance', icon: Shield },
   { title: 'Pagos', path: '/payments', icon: Wallet },
 ];
 
+const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
+
+const ROLE_MENU_ITEMS = {
+  PATIENT: ['/dashboard', '/appointments', '/profile'],
+  DENTIST: ['/dashboard', '/patients', '/appointments', '/profile'],
+  SECRETARY: ['/dashboard', '/dentists', '/patients', '/appointments', '/insurance', '/payments'],
+  OWNER: null,
+  SUPER_ADMIN: null,
+};
+
+const iconMap = {
+  '/dashboard': LayoutDashboard,
+  '/dentists': Stethoscope,
+  '/patients': Users,
+  '/appointments': CalendarDays,
+  '/insurance': Shield,
+  '/payments': Wallet,
+  '/admin': ShieldCheck,
+  '/profile': User,
+};
+
+const titleMap = {
+  '/dashboard': 'Dashboard',
+  '/dentists': 'Dentistas',
+  '/patients': 'Pacientes',
+  '/appointments': 'Agenda',
+  '/insurance': 'Obras Sociales',
+  '/payments': 'Pagos',
+  '/admin': 'Admin',
+  '/profile': 'Mi Perfil',
+};
+
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { open, toggleSidebar, isMobile } = useSidebar();
+
+  const visibleMenuItems = (() => {
+    if (!user) return [];
+
+    const allowedPaths = ROLE_MENU_ITEMS[user.role];
+    if (allowedPaths) {
+      return allowedPaths.map((path) => ({
+        title: titleMap[path],
+        path,
+        icon: iconMap[path],
+      }));
+    }
+
+    return [...menuItems, adminItem];
+  })();
 
   const handleLogout = async () => {
     await logout();
@@ -79,8 +126,8 @@ const AppSidebar = () => {
             <SidebarGroup>
               <SidebarGroupLabel>Navegación</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => {
+                <SidebarMenu className="space-y-2">
+                  {visibleMenuItems.map((item) => {
                     const active = location.pathname === item.path;
                     return (
                       <SidebarMenuItem key={item.path}>
@@ -89,10 +136,10 @@ const AppSidebar = () => {
                           isActive={active}
                           tooltip={item.title}
                           onClick={handleNavClick}
-                          className={active ? '!bg-primary/10 !text-primary hover:!bg-primary/15' : ''}
+                          className={`py-6 text-base ${active ? '!bg-primary/10 !text-primary hover:!bg-primary/15' : ''}`}
                         >
                           <Link to={item.path}>
-                            <item.icon className="size-4" />
+                            <item.icon className="size-5" />
                             <span>{item.title}</span>
                           </Link>
                         </SidebarMenuButton>

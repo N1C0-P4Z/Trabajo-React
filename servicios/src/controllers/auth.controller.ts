@@ -1,7 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/auth.service';
+import { userService } from '../services/user.service';
 
 export const authController = {
+  async register(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = req.body;
+      const ALLOWED_SELF_REGISTER_ROLES = ['PATIENT', 'DENTIST', 'SECRETARY'];
+      const role = data.role && ALLOWED_SELF_REGISTER_ROLES.includes(data.role)
+        ? data.role
+        : 'PATIENT';
+      const newUser = await userService.register({ ...data, role });
+      res.status(201).json(newUser);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;

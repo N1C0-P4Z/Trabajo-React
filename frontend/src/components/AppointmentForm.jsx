@@ -64,6 +64,7 @@ const AppointmentForm = ({
   doctors,
   appointments = [],
   doctorId = 'all',
+  selfPatientId = null,
 }) => {
   const isEditing = !!appointment;
   const [saving, setSaving] = useState(false);
@@ -81,7 +82,7 @@ const AppointmentForm = ({
   const [notes, setNotes] = useState('');
   const [obraSocial, setObraSocial] = useState('');
 
-  // Populate form when editing
+  // Populate form when editing or reset for new
   useEffect(() => {
     if (appointment) {
       setPatientId(String(appointment.patient_id));
@@ -94,7 +95,7 @@ const AppointmentForm = ({
       setNotes(appointment.notes || '');
       setObraSocial(appointment.obra_social || '');
     } else {
-      setPatientId('');
+      setPatientId(selfPatientId ? String(selfPatientId) : '');
       setFormDoctorId('');
       setSelectedDate(undefined);
       setTimeStr('');
@@ -104,7 +105,7 @@ const AppointmentForm = ({
       setNotes('');
       setObraSocial('');
     }
-  }, [appointment, open]);
+  }, [appointment, open, selfPatientId]);
 
   // Auto-set duration from selected type
   useEffect(() => {
@@ -195,22 +196,31 @@ const AppointmentForm = ({
               </div>
             )}
 
-            {/* Patient */}
-            <div className="grid gap-2">
-              <Label htmlFor="patient">Paciente</Label>
-              <Select value={patientId} onValueChange={setPatientId}>
-                <SelectTrigger id="patient">
-                  <SelectValue placeholder="Seleccionar paciente..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.first_name} {p.last_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Patient — read-only for self-booking, selector for staff */}
+            {selfPatientId ? (
+              <div className="grid gap-2">
+                <Label>Paciente</Label>
+                <div className="text-sm text-foreground font-medium py-2 px-3 rounded-lg border border-border bg-muted/50">
+                  Vos (auto-asignado)
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                <Label htmlFor="patient">Paciente</Label>
+                <Select value={patientId} onValueChange={setPatientId}>
+                  <SelectTrigger id="patient">
+                    <SelectValue placeholder="Seleccionar paciente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {patients.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.first_name} {p.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Doctor */}
             <div className="grid gap-2">

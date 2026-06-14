@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Formulario de inicio de sesión con usuario/email y contraseña.
+ * Al hacer submit llama al contexto de autenticación y redirige al dashboard.
+ * También ofrece links para registrarse como paciente o como personal de la clínica.
+ */
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -6,6 +12,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import ThemeToggle from './ThemeToggle';
 
+/**
+ * Formulario de inicio de sesión.
+ * Llama a login() del AuthContext con usuario/email y contraseña.
+ * Muestra errores y estado de carga, y redirige al dashboard al iniciar sesión.
+ * 
+ * @returns {JSX.Element}
+ */
 const LoginForm = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
@@ -85,15 +98,27 @@ const LoginForm = () => {
           {loading ? 'Ingresando...' : 'Ingresar'}
         </Button>
 
-        {/* No tenes cuenta, registrate! */}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors"
-          onClick={() => navigate('/register')}
-        >
-          ¿No tenés cuenta? Registrate
-        </Button>
+        <div className="text-center space-y-2 pt-2">
+          <p className="text-xs text-muted-foreground">¿No tenés cuenta?</p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors text-xs"
+              onClick={() => navigate('/register')}
+            >
+              Soy Paciente
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 h-9 bg-transparent border-border text-card-foreground hover:bg-muted hover:text-card-foreground rounded-xl font-medium transition-colors text-xs"
+              onClick={() => navigate('/register-staff')}
+            >
+              Soy Personal
+            </Button>
+          </div>
+        </div>
       </form>
     </div>
   );

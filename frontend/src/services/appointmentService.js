@@ -2,10 +2,12 @@ import { API_BASE } from './apiConfig';
 const API_URL = `${API_BASE}/v1/appointments`;
 
 const appointmentService = {
-  async getAll(start, end) {
+  async getAll(start, end, { patientId, doctorId } = {}) {
     const params = new URLSearchParams();
     if (start) params.append('start', start);
     if (end) params.append('end', end);
+    if (patientId) params.append('patient_id', String(patientId));
+    if (doctorId) params.append('doctor_id', String(doctorId));
 
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       credentials: 'include',
@@ -14,6 +16,23 @@ const appointmentService = {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Error al obtener turnos');
+    }
+
+    return await response.json();
+  },
+
+  async getMyAppointments(start, end) {
+    const params = new URLSearchParams();
+    if (start) params.append('start', start);
+    if (end) params.append('end', end);
+
+    const response = await fetch(`${API_URL}/me?${params.toString()}`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al obtener mis turnos');
     }
 
     return await response.json();

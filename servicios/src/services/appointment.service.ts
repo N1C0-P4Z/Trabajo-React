@@ -5,7 +5,7 @@ import { userRepository } from '../repositories/user.repository';
 const VALID_STATUSES = ['PENDIENTE', 'CONFIRMADO', 'EN_CURSO', 'COMPLETADO', 'CANCELADO', 'NO_ASISTIO'];
 
 export const appointmentService = {
-  async getByRange(startStr: string, endStr: string) {
+  async getByRange(startStr: string, endStr: string, patientId?: number, doctorId?: number) {
     const start = new Date(startStr);
     const end = new Date(endStr);
 
@@ -17,6 +17,28 @@ export const appointmentService = {
       throw new Error('Rango de fechas inválido (start > end)');
     }
 
+    return await appointmentRepository.findByDateRange(start, end, patientId, doctorId);
+  },
+
+  async getMyAppointments(role: string, userId: number, startStr: string, endStr: string) {
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      throw new Error('Rango de fechas inválido (formato incorrecto)');
+    }
+
+    if (start > end) {
+      throw new Error('Rango de fechas inválido (start > end)');
+    }
+
+    if (role === 'PATIENT') {
+      return await appointmentRepository.findByDateRange(start, end, userId, undefined);
+    }
+    if (role === 'DENTIST') {
+      return await appointmentRepository.findByDateRange(start, end, undefined, userId);
+    }
+    // Staff roles see all
     return await appointmentRepository.findByDateRange(start, end);
   },
 

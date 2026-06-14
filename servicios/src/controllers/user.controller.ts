@@ -4,7 +4,7 @@ import { userService } from '../services/user.service';
 export const userController = {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const { username, email, first_name, last_name, phone, password, role, specialty, license_number, is_active, avatar_url } = req.body;
+      const { username, email, first_name, last_name, phone, password, role, specialty, license_number, is_active, avatar_url, dni, obra_social, numero_afiliado, contacto_emergencia, telefono_emergencia, alergias, notas } = req.body;
 
       // Server-side protection: unauthenticated users can only create PATIENT accounts
       const user = (req as any).user;
@@ -28,11 +28,18 @@ export const userController = {
         last_name,
         phone,
         password,
-        role: isAdmin ? role : undefined,
-        specialty: isAdmin ? specialty : undefined,
-        license_number: isAdmin ? license_number : undefined,
-        is_active: isAdmin ? is_active : undefined,
-        avatar_url: isAdmin ? avatar_url : undefined
+        role,
+        specialty,
+        license_number,
+        is_active,
+        avatar_url,
+        dni,
+        obra_social,
+        numero_afiliado,
+        contacto_emergencia,
+        telefono_emergencia,
+        alergias,
+        notas
       });
 
       res.status(201).json(newUser);

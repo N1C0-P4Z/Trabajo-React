@@ -4,16 +4,21 @@ import { useAuth } from './hooks/useAuth';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import RegisterStaffPage from './pages/RegisterStaffPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminPage from './pages/AdminPage';
 import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
+import PatientsPage from './pages/PatientsPage';
+import PatientProfilePage from './pages/PatientProfilePage';
+import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <Routes>
@@ -38,6 +43,16 @@ function App() {
           )
         } 
       />
+      <Route 
+        path="/register-staff" 
+        element={
+          isAuthenticated() ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <RegisterStaffPage />
+          )
+        } 
+      />
 
       {/* Protected routes with Sidebar layout */}
       <Route element={
@@ -48,33 +63,41 @@ function App() {
         </ProtectedRoute>
       }>
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route 
-          path="/doctors" 
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/admin"
           element={
             <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+              <AdminPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route 
+          path="/dentists" 
+          element={
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorsPage />
             </RoleProtectedRoute>
           } 
         />
         <Route 
-          path="/doctors/:id" 
+          path="/dentists/:id" 
           element={
-            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorProfilePage />
             </RoleProtectedRoute>
           } 
         />
-        <Route 
-          path="/patients" 
-          element={
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground mb-2">Pacientes</h1>
-                <p className="text-muted-foreground">Próximamente...</p>
-              </div>
-            </div>
-          } 
-        />
+        <Route path="/patients" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'DENTIST']}>
+            <PatientsPage />
+          </RoleProtectedRoute>
+        } />
+        <Route path="/patients/:id" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'DENTIST', 'PATIENT']}>
+            <PatientProfilePage />
+          </RoleProtectedRoute>
+        } />
         <Route path="/appointments" element={<AgendaPage />} />
         <Route 
           path="/insurance" 

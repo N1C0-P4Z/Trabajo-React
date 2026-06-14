@@ -39,3 +39,7 @@ coverage/
 .atl/
 .superpowers/
 skill-registry.md
+openspec/
+specs/
+OC-PROXY.md
+AGENTS.md

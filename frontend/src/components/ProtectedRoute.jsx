@@ -1,7 +1,29 @@
+/**
+ * @fileoverview Componente que protege rutas que requieren autenticación.
+ * Si el usuario no inició sesión, lo redirige al login.
+ * Mientras se verifica la sesión muestra un spinner de carga.
+ */
+
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
+/**
+ * Envuelve rutas que solo pueden verse con sesión iniciada.
+ * 
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - El contenido protegido
+ * @returns {JSX.Element}
+ * 
+ * @example
+ * <Route element={
+ *   <ProtectedRoute>
+ *     <DashboardLayout>
+ *       <Outlet />
+ *     </DashboardLayout>
+ *   </ProtectedRoute>
+ * }>
+ */
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();

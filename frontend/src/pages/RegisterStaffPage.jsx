@@ -1,17 +1,17 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card"
-import RegisterForm from '../components/RegisterForm';
+import StaffRegisterForm from '../components/StaffRegisterForm';
 
-const RegisterPage = () => {
+const RegisterStaffPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-[600px] border border-border bg-card shadow-xl rounded-2xl">
+      <Card className="w-full max-w-[500px] border border-border bg-card shadow-xl rounded-2xl">
         <CardContent className="p-6">
-          <RegisterForm />
+          <StaffRegisterForm />
         </CardContent>
       </Card>
     </div>
   );
 };
 
-export default RegisterPage;
+export default RegisterStaffPage;

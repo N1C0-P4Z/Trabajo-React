@@ -1,7 +1,35 @@
 import { API_BASE } from './apiConfig';
 const API_URL = `${API_BASE}/v1`;
 
+export class FieldError extends Error {
+  constructor(message, field) {
+    super(message);
+    this.name = 'FieldError';
+    this.field = field || null;
+  }
+}
+
 export const authService = {
+  async register(userData) {
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new FieldError(
+        data.error || 'Error al registrarse',
+        data.field || null
+      );
+    }
+
+    return response.json();
+  },
+
   async login(username, password) {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',

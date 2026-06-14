@@ -1,10 +1,10 @@
 /**
- * @fileoverview Formulario de registro público para pacientes.
- * Recolecta datos personales, datos médicos (obra social, alergias, etc.)
- * y credenciales de acceso. Al registrarse redirige al login.
+ * @fileoverview Formulario de registro público para personal de la clínica
+ * (dentistas y secretarios/as). A diferencia del registro de pacientes, no
+ * pide datos médicos (sin obra social, DNI, alergias, etc.).
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,14 +20,9 @@ import { toast } from 'sonner';
 import ThemeToggle from './ThemeToggle';
 import { authService, FieldError } from '../services/authService';
 
-const OBRA_SOCIAL_OPTIONS = [
-  'Ninguna',
-  'OSDE',
-  'Swiss Medical',
-  'Galeno',
-  'Medicus',
-  'Prevención Salud',
-  'Otra',
+const ROLE_OPTIONS = [
+  { value: 'DENTIST', label: 'Dentista' },
+  { value: 'SECRETARY', label: 'Secretario/a' },
 ];
 
 const moveCursorToEnd = (e) => {
@@ -64,13 +59,13 @@ const FieldMessage = ({ message }) => {
 };
 
 /**
- * Formulario de auto-registro para pacientes.
- * Campos obligatorios: nombre, apellido, usuario, email, teléfono, DNI, contraseña.
- * Campos opcionales: obra social, número de afiliado, contacto de emergencia, alergias, notas.
+ * Formulario de auto-registro para personal de la clínica.
+ * Permite elegir entre rol Dentista o Secretario/a.
+ * Solo pide datos básicos: nombre, apellido, usuario, email, teléfono y contraseña.
  * 
  * @returns {JSX.Element}
  */
-const RegisterForm = () => {
+const StaffRegisterForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     first_name: '',
@@ -78,13 +73,7 @@ const RegisterForm = () => {
     username: '',
     email: '',
     phone: '',
-    dni: '',
-    obra_social: 'Ninguna',
-    numero_afiliado: '',
-    contacto_emergencia: '',
-    telefono_emergencia: '',
-    alergias: '',
-    notas: '',
+    role: 'DENTIST',
     password: '',
     confirmPassword: ''
   });
@@ -114,13 +103,6 @@ const RegisterForm = () => {
         if (!value.trim()) return 'Completá tu teléfono';
         if (!/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato inválido. Ej: +54 9 11 1234-5678';
         break;
-      case 'dni':
-        if (!value.trim()) return 'Completá tu DNI';
-        if (!/^\d{6,8}$/.test(value.trim())) return 'El DNI debe tener entre 6 y 8 dígitos';
-        break;
-      case 'telefono_emergencia':
-        if (value.trim() && !/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato inválido. Ej: +54 9 11 1234-5678';
-        break;
       case 'password':
         if (!value) return 'Completá tu contraseña';
         if (value.length < 6) return 'Mínimo 6 caracteres';
@@ -143,13 +125,8 @@ const RegisterForm = () => {
     setErrors(prev => ({ ...prev, [id]: fieldError }));
   };
 
-  const handleSelectChange = (value) => {
-    setFormData(prev => ({ ...prev, obra_social: value }));
-    setErrors(prev => ({ ...prev, obra_social: null }));
-
-    if (value === 'Ninguna') {
-      setFormData(prev => ({ ...prev, numero_afiliado: '' }));
-    }
+  const handleRoleChange = (value) => {
+    setFormData(prev => ({ ...prev, role: value }));
   };
 
   const handleBlur = (e) => {
@@ -190,13 +167,7 @@ const RegisterForm = () => {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         phone: formData.phone.trim(),
-        dni: formData.dni.trim(),
-        obra_social: formData.obra_social !== 'Ninguna' ? formData.obra_social : '',
-        numero_afiliado: formData.numero_afiliado.trim() || undefined,
-        contacto_emergencia: formData.contacto_emergencia.trim() || undefined,
-        telefono_emergencia: formData.telefono_emergencia.trim() || undefined,
-        alergias: formData.alergias.trim() || undefined,
-        notas: formData.notas.trim() || undefined,
+        role: formData.role,
         password: formData.password
       });
 
@@ -207,10 +178,8 @@ const RegisterForm = () => {
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       if (err instanceof FieldError && err.field) {
-        // Error específico de un campo → mostrarlo bajo ese campo
         setErrors(prev => ({ ...prev, [err.field]: err.message }));
       } else {
-        // Error general → mostrarlo al final del formulario
         setErrors(prev => ({ ...prev, submit: err.message }));
       }
     } finally {
@@ -218,25 +187,20 @@ const RegisterForm = () => {
     }
   };
 
-  const showAffiliate = formData.obra_social !== 'Ninguna';
-
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-card-foreground">Crear Cuenta</h2>
+        <h2 className="text-base font-semibold text-card-foreground">Crear Cuenta - Personal</h2>
         <ThemeToggle />
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed -mt-3">
-        Ingresá tus datos para registrarte como paciente
+        Ingresá tus datos para registrarte como personal de la clínica
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* ──────── DATOS BÁSICOS ──────── */}
         <SectionDivider label="Datos Básicos" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Nombre */}
           <div className="space-y-2">
             <Label htmlFor="first_name" className="text-sm font-medium text-card-foreground">
               Nombre<ReqAsterisk />
@@ -256,7 +220,6 @@ const RegisterForm = () => {
             <FieldMessage message={errors.first_name} />
           </div>
 
-          {/* Apellido */}
           <div className="space-y-2">
             <Label htmlFor="last_name" className="text-sm font-medium text-card-foreground">
               Apellido<ReqAsterisk />
@@ -278,7 +241,6 @@ const RegisterForm = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Nombre de usuario */}
           <div className="space-y-2">
             <Label htmlFor="username" className="text-sm font-medium text-card-foreground">
               Nombre de usuario<ReqAsterisk />
@@ -298,7 +260,6 @@ const RegisterForm = () => {
             <FieldMessage message={errors.username} />
           </div>
 
-          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-card-foreground">
               Correo electrónico<ReqAsterisk />
@@ -318,65 +279,42 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* Teléfono */}
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-card-foreground">
-            Teléfono<ReqAsterisk />
-          </Label>
-          <Input
-            id="phone"
-            type="tel"
-            autoComplete="off"
-            placeholder="+54 9 11 1234-5678"
-            value={formData.phone}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onClick={moveCursorToEnd}
-            disabled={loading}
-            className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
-          />
-          <FieldMessage message={errors.phone} />
-        </div>
-
-        {/* ──────── DATOS MÉDICOS ──────── */}
-        <SectionDivider label="Datos Médicos" />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* DNI */}
           <div className="space-y-2">
-            <Label htmlFor="dni" className="text-sm font-medium text-card-foreground">
-              DNI<ReqAsterisk />
+            <Label htmlFor="phone" className="text-sm font-medium text-card-foreground">
+              Teléfono<ReqAsterisk />
             </Label>
             <Input
-              id="dni"
-              type="text"
+              id="phone"
+              type="tel"
               autoComplete="off"
-              placeholder="12345678"
-              value={formData.dni}
+              placeholder="+54 9 11 1234-5678"
+              value={formData.phone}
               onChange={handleChange}
               onBlur={handleBlur}
               onClick={moveCursorToEnd}
               disabled={loading}
               className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
-            <FieldMessage message={errors.dni} />
+            <FieldMessage message={errors.phone} />
           </div>
 
-          {/* Obra Social */}
           <div className="space-y-2">
-            <Label htmlFor="obra_social" className="text-sm font-medium text-card-foreground">Obra Social</Label>
+            <Label htmlFor="role" className="text-sm font-medium text-card-foreground">
+              Rol<ReqAsterisk />
+            </Label>
             <Select
-              value={formData.obra_social}
-              onValueChange={handleSelectChange}
+              value={formData.role}
+              onValueChange={handleRoleChange}
               disabled={loading}
             >
               <SelectTrigger className="w-full h-9 bg-input border-border text-foreground rounded-xl">
-                <SelectValue placeholder="Seleccioná una obra social" />
+                <SelectValue placeholder="Seleccioná un rol" />
               </SelectTrigger>
               <SelectContent>
-                {OBRA_SOCIAL_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
+                {ROLE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -384,94 +322,9 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* Número de Afiliado (oculto si obra social es Ninguna) */}
-        {showAffiliate && (
-          <div className="space-y-2">
-            <Label htmlFor="numero_afiliado" className="text-sm font-medium text-card-foreground">Número de Afiliado</Label>
-            <Input
-              id="numero_afiliado"
-              type="text"
-              autoComplete="off"
-              placeholder="Ej. 123456789"
-              value={formData.numero_afiliado}
-              onChange={handleChange}
-              onClick={moveCursorToEnd}
-              disabled={loading}
-              className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
-            />
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Contacto de Emergencia */}
-          <div className="space-y-2">
-            <Label htmlFor="contacto_emergencia" className="text-sm font-medium text-card-foreground">Contacto de Emergencia</Label>
-            <Input
-              id="contacto_emergencia"
-              type="text"
-              autoComplete="off"
-              placeholder="Nombre completo"
-              value={formData.contacto_emergencia}
-              onChange={handleChange}
-              onClick={moveCursorToEnd}
-              disabled={loading}
-              className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
-            />
-            <FieldMessage message={errors.contacto_emergencia} />
-          </div>
-
-          {/* Teléfono de Emergencia */}
-          <div className="space-y-2">
-            <Label htmlFor="telefono_emergencia" className="text-sm font-medium text-card-foreground">Teléfono de Emergencia</Label>
-            <Input
-              id="telefono_emergencia"
-              type="tel"
-              autoComplete="off"
-              placeholder="+54 9 11 1234-5678"
-              value={formData.telefono_emergencia}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              onClick={moveCursorToEnd}
-              disabled={loading}
-              className="h-9 bg-input border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
-            />
-            <FieldMessage message={errors.telefono_emergencia} />
-          </div>
-        </div>
-
-        {/* Alergias */}
-        <div className="space-y-2">
-          <Label htmlFor="alergias" className="text-sm font-medium text-card-foreground">Alergias</Label>
-          <textarea
-            id="alergias"
-            placeholder="Detallá si tenés alguna alergia conocida..."
-            value={formData.alergias}
-            onChange={handleChange}
-            disabled={loading}
-            rows={3}
-            className="w-full px-3 py-2 bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y min-h-[60px] text-sm"
-          />
-        </div>
-
-        {/* Notas médicas */}
-        <div className="space-y-2">
-          <Label htmlFor="notas" className="text-sm font-medium text-card-foreground">Notas médicas</Label>
-          <textarea
-            id="notas"
-            placeholder="Condiciones preexistentes, medicación, etc..."
-            value={formData.notas}
-            onChange={handleChange}
-            disabled={loading}
-            rows={3}
-            className="w-full px-3 py-2 bg-input border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y min-h-[60px] text-sm"
-          />
-        </div>
-
-        {/* ──────── CREDENCIALES ──────── */}
         <SectionDivider label="Credenciales" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Contraseña */}
           <div className="space-y-2">
             <Label htmlFor="password" className="text-sm font-medium text-card-foreground">
               Contraseña<ReqAsterisk />
@@ -491,7 +344,6 @@ const RegisterForm = () => {
             <FieldMessage message={errors.password} />
           </div>
 
-          {/* Repetir contraseña */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className="text-sm font-medium text-card-foreground">
               Repetir contraseña<ReqAsterisk />
@@ -512,14 +364,12 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* Error general del submit */}
         {errors.submit && (
           <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-xl">
             {errors.submit}
           </div>
         )}
 
-        {/* Register button */}
         <Button
           type="submit"
           disabled={loading}
@@ -528,7 +378,6 @@ const RegisterForm = () => {
           {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
         </Button>
 
-        {/* Already have account */}
         <div className="text-center text-sm text-muted-foreground">
           ¿Ya tenés cuenta?{' '}
           <Link
@@ -543,4 +392,4 @@ const RegisterForm = () => {
   );
 };
 
-export default RegisterForm;
+export default StaffRegisterForm;

@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes';
+import { AppError } from './utils/errors';
 
 const app = express();
 
@@ -34,28 +35,16 @@ app.use('/', routes);
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err.message);
 
+  // AppError: structured error with statusCode and optional field
+  if (err instanceof AppError) {
+    const body: any = { error: err.message };
+    if (err.field) body.field = err.field;
+    res.status(err.statusCode).json(body);
+    return;
+  }
+
+  // Legacy validation errors (strings thrown by services not yet migrated)
   const validationErrors = [
-    'El email es requerido',
-    'Formato de email inválido',
-    'El nombre de usuario es requerido',
-    'El nombre de usuario debe tener al menos 3 caracteres',
-    'El nombre de usuario no puede tener más de 30 caracteres',
-    'El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos',
-    'El nombre es requerido',
-    'El nombre debe tener al menos 2 caracteres',
-    'El nombre no puede tener más de 50 caracteres',
-    'El apellido es requerido',
-    'El apellido debe tener al menos 2 caracteres',
-    'El apellido no puede tener más de 50 caracteres',
-    'La contraseña es requerida',
-    'La contraseña debe tener al menos 6 caracteres',
-    'País no soportado',
-    'Formato argentino inválido',
-    'El teléfono es requerido',
-    'No hay datos para actualizar',
-    'ID de usuario inválido',
-    'Username/email and password are required',
-    // Appointment validation errors
     'Campos requeridos faltantes para el turno',
     'Rango de fechas inválido (start > end)',
     'Rango de fechas inválido (formato incorrecto)',
@@ -67,10 +56,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     'Fecha y hora inválidas',
     'Estado inválido',
     'Los parámetros start y end son requeridos',
-    // Doctor-specific validation errors
-    'Especialidad no válida',
-    'La especialidad es requerida',
-    'El número de matrícula es requerido'
+    'No hay datos para actualizar',
+    'ID de usuario inválido',
+    'ID de paciente inválido',
   ];
 
   if (validationErrors.some(msg => err.message.includes(msg) || err.message === msg)) {
@@ -78,7 +66,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     return;
   }
 
-  if (err.message.includes('ya está en uso') || err.message === 'Ya existe un tipo de turno con ese nombre') {
+  if (err.message.includes('ya está en uso') ||
+      err.message.includes('ya está registrado') ||
+      err.message.includes('no está disponible') ||
+      err.message === 'Ya existe un tipo de turno con ese nombre') {
     res.status(409).json({ error: err.message });
     return;
   }
@@ -96,9 +87,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   if (err.message === 'No autorizado para editar este usuario' ||
       err.message === 'No autorizado para eliminar usuarios' ||
       err.message === 'No se puede eliminar al administrador del sistema' ||
-      err.message === 'No se puede eliminar a otro administrador' ||
+      err.message === 'No se puede eliminar al último SUPER_ADMIN del sistema' ||
+      err.message === 'No podés eliminar tu propia cuenta' ||
       err.message === 'No autorizado para gestionar tipos de turno' ||
-      err.message === 'No autorizado para gestionar doctores') {
+      err.message === 'No autorizado para gestionar doctores' ||
+      err.message === 'No autorizado para gestionar pacientes') {
     res.status(403).json({ error: err.message });
     return;
   }

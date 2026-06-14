@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Componente Button reutilizable con variantes de estilo y tamaño.
+ * Usa class-variance-authority (CVA) para gestionar las variantes y Radix Slot
+ * para permitir renderizar como un elemento diferente (asChild).
+ */
+
 import * as React from "react"
 import { cva } from "class-variance-authority";
 import { Slot } from "radix-ui"
@@ -39,6 +45,24 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Botón con variantes de estilo y tamaño.
+ * Soporta la prop `asChild` para renderizar como otro componente (ej: Link de react-router).
+ * 
+ * @param {Object} props
+ * @param {string} [props.className] - Clases CSS adicionales
+ * @param {"default"|"outline"|"secondary"|"ghost"|"destructive"|"link"} [props.variant="default"] - Variante de estilo
+ * @param {"default"|"xs"|"sm"|"lg"|"icon"|"icon-xs"|"icon-sm"|"icon-lg"} [props.size="default"] - Tamaño del botón
+ * @param {boolean} [props.asChild=false] - Si es true, renderiza el hijo como el componente raíz (Slot de Radix)
+ * @param {React.Ref<HTMLButtonElement>} ref
+ * @returns {JSX.Element}
+ * 
+ * @example
+ * <Button variant="outline" size="sm">Cancelar</Button>
+ * <Button asChild>
+ *   <Link to="/dashboard">Ir al dashboard</Link>
+ * </Button>
+ */
 const Button = React.forwardRef(({
   className,
   variant = "default",

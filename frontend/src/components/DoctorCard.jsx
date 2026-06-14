@@ -12,7 +12,7 @@ function getInitials(firstName, lastName) {
   return `${first}${last}` || '?';
 }
 
-const DoctorCard = ({ doctor, onToggleActive, onDelete }) => {
+const DoctorCard = ({ doctor, onToggleActive, onDelete, hideActions }) => {
   const navigate = useNavigate();
   const isActive = doctor.is_active !== false; // default true
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,48 +59,50 @@ const DoctorCard = ({ doctor, onToggleActive, onDelete }) => {
           </div>
         </div>
 
-        <div className="relative shrink-0" ref={menuRef}>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="shrink-0"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4"
+        {!hideActions && (
+          <div className="relative shrink-0" ref={menuRef}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="shrink-0"
+              onClick={() => setMenuOpen(!menuOpen)}
             >
-              <circle cx="12" cy="5" r="1" />
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="12" cy="19" r="1" />
-            </svg>
-          </Button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="size-4"
+              >
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
+            </Button>
 
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 z-50 min-w-36 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10">
-              <button
-                className="flex w-full min-h-7 cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-hidden hover:bg-accent hover:text-accent-foreground"
-                onClick={() => handleAction(onToggleActive)}
-              >
-                {isActive ? 'Desactivar' : 'Activar'}
-              </button>
-              <button
-                className="flex w-full min-h-7 cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-hidden hover:bg-destructive/10 hover:text-destructive text-destructive"
-                onClick={() => handleAction(onDelete)}
-              >
-                Eliminar
-              </button>
-            </div>
-          )}
-        </div>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 min-w-36 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10">
+                <button
+                  className="flex w-full min-h-7 cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-hidden hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => handleAction(onToggleActive)}
+                >
+                  {isActive ? 'Desactivar' : 'Activar'}
+                </button>
+                <button
+                  className="flex w-full min-h-7 cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-xs outline-hidden hover:bg-destructive/10 hover:text-destructive text-destructive"
+                  onClick={() => handleAction(onDelete)}
+                >
+                  Eliminar
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Body: Details */}
@@ -147,7 +149,7 @@ const DoctorCard = ({ doctor, onToggleActive, onDelete }) => {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => navigate(`/doctors/${doctor.id}`)}
+            onClick={() => navigate(`/dentists/${doctor.id}`)}
             title="Ver Perfil"
           >
             <User className="size-4" />

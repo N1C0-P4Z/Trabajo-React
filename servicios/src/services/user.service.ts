@@ -1,5 +1,7 @@
-import { hashPassword } from '../utils/bcrypt';
+import { hashPassword, comparePassword } from '../utils/bcrypt';
 import { userRepository } from '../repositories/user.repository';
+import { patientRepository } from '../repositories/patient.repository';
+import { AppError } from '../utils/errors';
 
 // ============================================================
 // CATÁLOGO DE ESPECIALIDADES
@@ -20,6 +22,16 @@ export const SPECIALTIES = [
 ] as const;
 
 export type Specialty = typeof SPECIALTIES[number];
+
+export const VALID_ROLES = [
+  'SUPER_ADMIN',
+  'OWNER',
+  'DENTIST',
+  'SECRETARY',
+  'PATIENT'
+] as const;
+
+export type ValidRole = typeof VALID_ROLES[number];
 
 // ============================================================
 // VALIDADORES EXPANDIBLES
@@ -45,13 +57,13 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validateEmail(email: string): string {
   if (!email || typeof email !== 'string') {
-    throw new Error('El email es requerido');
+    throw new AppError('Completá tu correo electrónico', 400, 'email');
   }
 
   const trimmed = email.trim().toLowerCase();
 
   if (!emailRegex.test(trimmed)) {
-    throw new Error('Formato de email inválido');
+    throw new AppError('El formato del email no es válido', 400, 'email');
   }
 
   return trimmed;
@@ -59,18 +71,18 @@ function validateEmail(email: string): string {
 
 function validatePhone(phone: string, countryCode: string = 'AR'): string {
   if (!phone || typeof phone !== 'string') {
-    throw new Error('El teléfono es requerido');
+    throw new AppError('Completá tu teléfono', 400, 'phone');
   }
 
   const trimmed = phone.trim();
   const validator = countryPhoneValidators[countryCode];
 
   if (!validator) {
-    throw new Error(`País no soportado: ${countryCode}`);
+    throw new AppError(`País no soportado: ${countryCode}`, 400, 'phone');
   }
 
   if (!validator.regex.test(trimmed)) {
-    throw new Error(validator.message);
+    throw new AppError('Formato de teléfono inválido. Ej: +54 9 11 1234-5678', 400, 'phone');
   }
 
   return trimmed;
@@ -78,39 +90,39 @@ function validatePhone(phone: string, countryCode: string = 'AR'): string {
 
 function validateUsername(username: string): string {
   if (!username || typeof username !== 'string') {
-    throw new Error('El nombre de usuario es requerido');
+    throw new AppError('Completá tu nombre de usuario', 400, 'username');
   }
 
   const trimmed = username.trim();
 
   if (trimmed.length < 3) {
-    throw new Error('El nombre de usuario debe tener al menos 3 caracteres');
+    throw new AppError('Mínimo 3 caracteres', 400, 'username');
   }
 
   if (trimmed.length > 30) {
-    throw new Error('El nombre de usuario no puede tener más de 30 caracteres');
+    throw new AppError('Máximo 30 caracteres', 400, 'username');
   }
 
   if (!/^[a-zA-Z0-9_.-]+$/.test(trimmed)) {
-    throw new Error('El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos');
+    throw new AppError('Solo letras, números, puntos y guiones', 400, 'username');
   }
 
   return trimmed;
 }
 
-function validateName(name: string, field: string = 'nombre'): string {
+function validateName(name: string, field: string = 'nombre', fieldKey: string = 'first_name'): string {
   if (!name || typeof name !== 'string') {
-    throw new Error(`El ${field} es requerido`);
+    throw new AppError(`Completá tu ${field}`, 400, fieldKey);
   }
 
   const trimmed = name.trim();
 
   if (trimmed.length < 2) {
-    throw new Error(`El ${field} debe tener al menos 2 caracteres`);
+    throw new AppError(`Mínimo 2 caracteres`, 400, fieldKey);
   }
 
   if (trimmed.length > 50) {
-    throw new Error(`El ${field} no puede tener más de 50 caracteres`);
+    throw new AppError(`Máximo 50 caracteres`, 400, fieldKey);
   }
 
   return trimmed;
@@ -118,11 +130,11 @@ function validateName(name: string, field: string = 'nombre'): string {
 
 function validatePassword(password: string): string {
   if (!password || typeof password !== 'string') {
-    throw new Error('La contraseña es requerida');
+    throw new AppError('Completá tu contraseña', 400, 'password');
   }
 
   if (password.length < 6) {
-    throw new Error('La contraseña debe tener al menos 6 caracteres');
+    throw new AppError('Mínimo 6 caracteres', 400, 'password');
   }
 
   return password;
@@ -130,13 +142,13 @@ function validatePassword(password: string): string {
 
 function validateSpecialty(specialty: string): string {
   if (!specialty || typeof specialty !== 'string') {
-    throw new Error('La especialidad es requerida');
+    throw new AppError('Seleccioná una especialidad', 400, 'specialty');
   }
 
   const trimmed = specialty.trim();
 
   if (!SPECIALTIES.includes(trimmed as any)) {
-    throw new Error('Especialidad no válida');
+    throw new AppError('La especialidad no es válida', 400, 'specialty');
   }
 
   return trimmed;
@@ -144,14 +156,14 @@ function validateSpecialty(specialty: string): string {
 
 async function validateLicenseNumber(license: string, excludeUserId?: number): Promise<string> {
   if (!license || typeof license !== 'string') {
-    throw new Error('El número de matrícula es requerido');
+    throw new AppError('Completá el número de matrícula', 400, 'license_number');
   }
 
   const trimmed = license.trim();
 
   const existing = await userRepository.findByLicenseNumber(trimmed);
   if (existing && (!excludeUserId || (existing as any).id !== excludeUserId)) {
-    throw new Error('El número de matrícula ya está en uso');
+    throw new AppError('La matrícula ya está registrada', 409, 'license_number');
   }
 
   return trimmed;
@@ -174,30 +186,45 @@ export const userService = {
     license_number?: string;
     is_active?: boolean;
     avatar_url?: string;
+    dni?: string;
+    obra_social?: string;
+    numero_afiliado?: string;
+    contacto_emergencia?: string;
+    telefono_emergencia?: string;
+    alergias?: string;
+    notas?: string;
   }) {
     const { email, first_name, last_name, phone, password } = data;
 
     const validUsername = validateUsername(data.username);
     const validEmail = validateEmail(email);
-    const validFirstName = validateName(first_name, 'nombre');
-    const validLastName = validateName(last_name, 'apellido');
+    const validFirstName = validateName(first_name, 'nombre', 'first_name');
+    const validLastName = validateName(last_name, 'apellido', 'last_name');
     const validPhone = validatePhone(phone, 'AR');
     const validPassword = validatePassword(password);
 
     const existingUsername = await userRepository.findByUsername(validUsername);
     if (existingUsername) {
-      throw new Error('El nombre de usuario ya está en uso');
+      throw new AppError('El nombre de usuario no está disponible', 409, 'username');
     }
 
     const existingEmail = await userRepository.findByEmail(validEmail);
     if (existingEmail) {
-      throw new Error('El email ya está en uso');
+      throw new AppError('El email ya está registrado', 409, 'email');
     }
 
     const users = await userRepository.findAll();
     const existingPhone = users.find((u: any) => u.phone === validPhone);
     if (existingPhone) {
-      throw new Error('El número de teléfono ya está en uso');
+      throw new AppError('El teléfono ya está registrado', 409, 'phone');
+    }
+
+    // Validar DNI si se provee (para role PATIENT)
+    if (data.dni?.trim()) {
+      const existingDni = await patientRepository.findByDni(data.dni.trim());
+      if (existingDni) {
+        throw new AppError('El DNI ya está registrado', 409, 'dni');
+      }
     }
 
     // Validar specialty si se provee
@@ -225,6 +252,21 @@ export const userService = {
       is_active: data.is_active !== undefined ? data.is_active : true,
       avatar_url: data.avatar_url || null
     });
+
+    // Auto-crear PatientProfile si el rol es PATIENT
+    if (newUser.role === 'PATIENT') {
+      const dni = data.dni?.trim() || `PENDIENTE-${newUser.id}`;
+      await patientRepository.create({
+        user_id: newUser.id,
+        dni,
+        obra_social: data.obra_social?.trim() || null,
+        numero_afiliado: data.numero_afiliado?.trim() || null,
+        contacto_emergencia: data.contacto_emergencia?.trim() || null,
+        telefono_emergencia: data.telefono_emergencia?.trim() || null,
+        alergias: data.alergias?.trim() || null,
+        notas: data.notas?.trim() || null,
+      });
+    }
 
     return newUser;
   },
@@ -268,12 +310,36 @@ export const userService = {
 
     const updateData: any = {};
 
+    // Password change
+    if (data.new_password !== undefined && data.new_password !== null && data.new_password !== '') {
+      const currentPassword = data.current_password;
+      if (!currentPassword) {
+        throw new AppError('Debés ingresar tu contraseña actual', 400, 'current_password');
+      }
+
+      const userWithPassword = await userRepository.findByIdWithPassword(userId);
+      if (!userWithPassword?.password_hash) {
+        throw new AppError('Usuario no encontrado', 404);
+      }
+
+      const isValid = await comparePassword(currentPassword, userWithPassword.password_hash);
+      if (!isValid) {
+        throw new AppError('La contraseña actual no es correcta', 400, 'current_password');
+      }
+
+      if (data.new_password.length < 6) {
+        throw new AppError('La nueva contraseña debe tener al menos 6 caracteres', 400, 'new_password');
+      }
+
+      updateData.password_hash = await hashPassword(data.new_password);
+    }
+
     if (data.first_name !== undefined) {
-      updateData.first_name = validateName(data.first_name, 'nombre');
+      updateData.first_name = validateName(data.first_name, 'nombre', 'first_name');
     }
 
     if (data.last_name !== undefined) {
-      updateData.last_name = validateName(data.last_name, 'apellido');
+      updateData.last_name = validateName(data.last_name, 'apellido', 'last_name');
     }
 
     if (data.phone !== undefined) {
@@ -321,6 +387,14 @@ export const userService = {
       updateData.avatar_url = data.avatar_url || null;
     }
 
+    if (data.role !== undefined) {
+      const validRoles: string[] = [...VALID_ROLES];
+      if (!validRoles.includes(data.role)) {
+        throw new AppError(`Rol inválido. Roles permitidos: ${validRoles.join(', ')}`, 400, 'role');
+      }
+      updateData.role = data.role;
+    }
+
     if (Object.keys(updateData).length === 0) {
       throw new Error('No hay datos para actualizar');
     }
@@ -332,22 +406,35 @@ export const userService = {
   async deleteUser(id: string | number, requestingUser?: { userId: number; role: string }) {
     const userId = typeof id === 'string' ? parseInt(id) : id;
     if (!userId || isNaN(userId)) {
-      throw new Error('ID de usuario inválido');
+      throw new AppError('ID de usuario inválido', 400);
     }
 
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new Error('Usuario no encontrado');
+      throw new AppError('Usuario no encontrado', 404);
     }
 
-    // Rule 1: SUPER_ADMIN and OWNER accounts are NEVER deletable
-    if (user.role === 'SUPER_ADMIN' || user.role === 'OWNER') {
-      throw new Error('No se puede eliminar al administrador del sistema');
+    // Self-deletion guard: a user cannot delete their own account
+    if (requestingUser && requestingUser.userId === userId) {
+      throw new AppError('No podés eliminar tu propia cuenta', 403);
     }
 
-    // Rule 2: Only SUPER_ADMIN and OWNER roles can delete users
+    // Last SUPER_ADMIN guard: cannot delete the last SUPER_ADMIN
+    if (user.role === 'SUPER_ADMIN') {
+      const superAdminCount = await userRepository.countByRole('SUPER_ADMIN');
+      if (superAdminCount <= 1) {
+        throw new AppError('No se puede eliminar al último SUPER_ADMIN del sistema', 403);
+      }
+    }
+
+    // OWNER accounts cannot be deleted
+    if (user.role === 'OWNER') {
+      throw new AppError('No se puede eliminar al administrador del sistema', 403);
+    }
+
+    // Only SUPER_ADMIN and OWNER roles can delete users
     if (!requestingUser || (requestingUser.role !== 'SUPER_ADMIN' && requestingUser.role !== 'OWNER')) {
-      throw new Error('No autorizado para eliminar usuarios');
+      throw new AppError('No autorizado para eliminar usuarios', 403);
     }
 
     await userRepository.delete(userId);

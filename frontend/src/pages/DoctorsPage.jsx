@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import userService from '../services/userService';
+import { useAuth } from '../hooks/useAuth';
 import DoctorCard from '../components/DoctorCard';
 import DoctorFormModal from '../components/DoctorFormModal';
 import {
@@ -23,6 +24,10 @@ import {
 import { toast } from 'sonner';
 
 const DoctorsPage = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'OWNER';
+  const isSecretary = user?.role === 'SECRETARY';
+
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -110,22 +115,19 @@ const DoctorsPage = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Doctores</BreadcrumbPage>
+            <BreadcrumbPage>Dentistas</BreadcrumbPage>
+
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Doctores</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Dentistas</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Gestioná el equipo de odontólogos de la clínica
+            Gestioná el equipo de dentistas de la clínica
           </p>
         </div>
-
-
-      </div>
 
       {/* Error state */}
       {error && (
@@ -158,6 +160,7 @@ const DoctorsPage = () => {
               doctor={doctor}
               onToggleActive={() => handleToggleActive(doctor)}
               onDelete={() => handleDeleteClick(doctor)}
+              hideActions={isSecretary}
             />
           ))}
         </div>

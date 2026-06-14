@@ -52,6 +52,12 @@ export const userRepository = {
     });
   },
 
+  async findByIdWithPassword(id: number) {
+    return await prisma.user.findUnique({
+      where: { id }
+    });
+  },
+
   async findAll(role?: string) {
     const where: any = {};
     if (role) {
@@ -87,6 +93,12 @@ export const userRepository = {
   async delete(id: number) {
     return await prisma.user.delete({
       where: { id }
+    });
+  },
+
+  async countByRole(role: string): Promise<number> {
+    return await prisma.user.count({
+      where: { role }
     });
   }
 };
