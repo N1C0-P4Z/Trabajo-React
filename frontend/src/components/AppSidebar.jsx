@@ -17,7 +17,7 @@ import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, Shie
 
 const menuItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { title: 'Doctores', path: '/doctors', icon: Stethoscope },
+  { title: 'Dentistas', path: '/dentists', icon: Stethoscope },
   { title: 'Pacientes', path: '/patients', icon: Users },
   { title: 'Agenda', path: '/appointments', icon: CalendarDays },
   { title: 'Obras Sociales', path: '/insurance', icon: Shield },
@@ -28,15 +28,15 @@ const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
 
 const ROLE_MENU_ITEMS = {
   PATIENT: ['/appointments', '/profile'],
-  DENTIST: ['/dashboard', '/doctors', '/patients', '/appointments', '/insurance', '/payments'],
-  SECRETARY: ['/dashboard', '/doctors', '/patients', '/appointments', '/insurance', '/payments'],
+  DENTIST: ['/dashboard', '/patients', '/appointments', '/profile'],
+  SECRETARY: ['/dashboard', '/dentists', '/patients', '/appointments', '/insurance', '/payments'],
   OWNER: null,
   SUPER_ADMIN: null,
 };
 
 const iconMap = {
   '/dashboard': LayoutDashboard,
-  '/doctors': Stethoscope,
+  '/dentists': Stethoscope,
   '/patients': Users,
   '/appointments': CalendarDays,
   '/insurance': Shield,
@@ -47,7 +47,7 @@ const iconMap = {
 
 const titleMap = {
   '/dashboard': 'Dashboard',
-  '/doctors': 'Doctores',
+  '/dentists': 'Dentistas',
   '/patients': 'Pacientes',
   '/appointments': 'Agenda',
   '/insurance': 'Obras Sociales',

@@ -51,14 +51,7 @@ function App() {
           </DashboardLayout>
         </ProtectedRoute>
       }>
-        <Route 
-          path="/dashboard" 
-          element={
-            user?.role === 'PATIENT' 
-              ? <Navigate to="/appointments" replace /> 
-              : <DashboardPage />
-          } 
-        />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route
           path="/admin"
@@ -69,7 +62,7 @@ function App() {
           }
         />
         <Route 
-          path="/doctors" 
+          path="/dentists" 
           element={
             <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorsPage />
@@ -77,7 +70,7 @@ function App() {
           } 
         />
         <Route 
-          path="/doctors/:id" 
+          path="/dentists/:id" 
           element={
             <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <DoctorProfilePage />
@@ -85,12 +78,12 @@ function App() {
           } 
         />
         <Route path="/patients" element={
-          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'DENTIST']}>
             <PatientsPage />
           </RoleProtectedRoute>
         } />
         <Route path="/patients/:id" element={
-          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'PATIENT']}>
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'DENTIST', 'PATIENT']}>
             <PatientProfilePage />
           </RoleProtectedRoute>
         } />
