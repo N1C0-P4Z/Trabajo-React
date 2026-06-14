@@ -167,25 +167,25 @@ const AdminPage = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {kpiConfig.map(({ key, label, icon: Icon, color, placeholder }) => {
+      {/* Main KPI cards — 4-column grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpiConfig.slice(0, 4).map(({ key, label, icon: Icon, color }) => {
           const value = stats?.[key];
-          const isPlaceholder = placeholder && (value === 0 || value === null);
 
           return (
-            <Card key={key}>
+            <Card key={key} className="py-4">
               <CardHeader>
-                <CardDescription>{label}</CardDescription>
+                <CardDescription className="text-sm">{label}</CardDescription>
                 <CardTitle>
-                  <span className={`flex items-center gap-2 ${color}`}>
-                    <Icon className="size-5" />
-                    {statsLoading ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : isPlaceholder ? (
-                      <span className="text-muted-foreground text-sm">No disponible</span>
-                    ) : (
-                      formatValue(key, value)
-                    )}
+                  <span className={`flex items-center gap-3 ${color}`}>
+                    <Icon className="size-8" />
+                    <span className="text-3xl">
+                      {statsLoading ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        formatValue(key, value)
+                      )}
+                    </span>
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -194,12 +194,43 @@ const AdminPage = () => {
         })}
       </div>
 
+      {/* Income card — full width below */}
+      <div className="grid grid-cols-1 gap-4">
+        {(() => {
+          const { key, label, icon: Icon, color, placeholder } = kpiConfig[4];
+          const value = stats?.[key];
+          const isPlaceholder = placeholder && (value === 0 || value === null);
+
+          return (
+            <Card key={key} className="py-4">
+              <CardHeader>
+                <CardDescription className="text-sm">{label}</CardDescription>
+                <CardTitle>
+                  <span className={`flex items-center gap-3 ${color}`}>
+                    <Icon className="size-8" />
+                    <span className="text-3xl">
+                      {statsLoading ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : isPlaceholder ? (
+                        <span className="text-muted-foreground text-base">No disponible</span>
+                      ) : (
+                        formatValue(key, value)
+                      )}
+                    </span>
+                  </span>
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          );
+        })()}
+      </div>
+
       {/* User Management Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Usuarios</h2>
-          <Button size="sm" onClick={handleCreateUser}>
-            <Plus className="size-4 mr-1" />
+          <Button size="default" className="px-5 py-5 text-base font-semibold" onClick={handleCreateUser}>
+            <Plus className="size-5 mr-1.5" />
             Crear Usuario
           </Button>
         </div>
