@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Componentes de select (dropdown) basados en Radix UI.
+ * Incluye Select, SelectTrigger, SelectValue, SelectContent, SelectItem
+ * y otros subcomponentes.
+ */
+
 import * as React from "react"
 import { Select as SelectPrimitive } from "radix-ui"
 
@@ -5,6 +11,12 @@ import { cn } from "@/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon, Tick02Icon, ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons"
 
+/**
+ * Componente raíz del select. Debe envolver a SelectTrigger, SelectValue y SelectContent.
+ * 
+ * @param {Object} props - Props que se pasan a SelectPrimitive.Root
+ * @returns {JSX.Element}
+ */
 function Select({
   ...props
 }) {
@@ -29,14 +41,15 @@ function SelectValue({
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
-function SelectTrigger({
+const SelectTrigger = React.forwardRef(({
   className,
   size = "default",
   children,
   ...props
-}) {
+}, ref) => {
   return (
     <SelectPrimitive.Trigger
+      ref={ref}
       data-slot="select-trigger"
       data-size={size}
       className={cn(
@@ -53,7 +66,7 @@ function SelectTrigger({
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
-}
+})
 
 function SelectContent({
   className,

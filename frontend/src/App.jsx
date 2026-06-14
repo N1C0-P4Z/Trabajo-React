@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import RegisterStaffPage from './pages/RegisterStaffPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
 import AgendaPage from './pages/AgendaPage';
@@ -39,6 +40,16 @@ function App() {
             <Navigate to="/dashboard" replace />
           ) : (
             <RegisterPage />
+          )
+        } 
+      />
+      <Route 
+        path="/register-staff" 
+        element={
+          isAuthenticated() ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <RegisterStaffPage />
           )
         } 
       />

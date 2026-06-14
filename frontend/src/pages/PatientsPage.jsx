@@ -317,7 +317,7 @@ const PatientsPage = () => {
           value={obraSocial}
           onValueChange={(v) => handleFilterChange('obraSocial', v)}
         >
-          <SelectTrigger className="w-40 h-7 text-xs">
+          <SelectTrigger className="min-w-36 h-7 text-xs">
             <SelectValue placeholder="Obra social" />
           </SelectTrigger>
           <SelectContent>
@@ -334,7 +334,7 @@ const PatientsPage = () => {
           value={estado}
           onValueChange={(v) => handleFilterChange('estado', v)}
         >
-          <SelectTrigger className="w-28 h-7 text-xs">
+          <SelectTrigger className="min-w-24 h-7 text-xs">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -352,7 +352,7 @@ const PatientsPage = () => {
             value={doctorId}
             onValueChange={(v) => handleFilterChange('doctorId', v)}
           >
-            <SelectTrigger className="w-40 h-7 text-xs">
+            <SelectTrigger className="min-w-36 h-7 text-xs">
               <SelectValue placeholder="Dentista/a" />
             </SelectTrigger>
             <SelectContent>

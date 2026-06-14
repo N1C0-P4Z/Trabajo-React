@@ -1,15 +1,34 @@
+/**
+ * @fileoverview Componente Switch (toggle) basado en Radix UI.
+ * Se usa para activar/desactivar opciones booleanas como el estado de un usuario.
+ */
+
 import * as React from "react"
 import { Switch as SwitchPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
-function Switch({
+/**
+ * Interruptor de tipo toggle (on/off).
+ * 
+ * @param {Object} props
+ * @param {string} [props.className] - Clases CSS adicionales
+ * @param {"default"|"sm"} [props.size="default"] - Tamaño del switch
+ * @param {React.Ref<HTMLButtonElement>} ref
+ * @returns {JSX.Element}
+ * 
+ * @example
+ * <Switch checked={activo} onCheckedChange={setActivo} />
+ * <Switch size="sm" disabled />
+ */
+const Switch = React.forwardRef(({
   className,
   size = "default",
   ...props
-}) {
+}, ref) => {
   return (
     <SwitchPrimitive.Root
+      ref={ref}
       data-slot="switch"
       data-size={size}
       className={cn(
@@ -22,6 +41,6 @@ function Switch({
         className="pointer-events-none block rounded-full bg-background ring-0 transition-transform group-data-[size=default]/switch:size-3.5 group-data-[size=sm]/switch:size-3 group-data-[size=default]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=sm]/switch:data-checked:translate-x-[calc(100%-2px)] dark:data-checked:bg-primary-foreground group-data-[size=default]/switch:data-unchecked:translate-x-0 group-data-[size=sm]/switch:data-unchecked:translate-x-0 dark:data-unchecked:bg-foreground" />
     </SwitchPrimitive.Root>
   );
-}
+})
 
 export { Switch }
