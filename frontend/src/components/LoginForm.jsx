@@ -57,6 +57,7 @@ const LoginForm = () => {
           <Input
             id="username"
             type="text"
+            autoComplete="username"
             required
             placeholder="admin o admin@clinica.com"
             value={username}
@@ -72,6 +73,7 @@ const LoginForm = () => {
           <Input
             id="password"
             type="password"
+            autoComplete="current-password"
             required
             placeholder="secret123"
             value={password}
