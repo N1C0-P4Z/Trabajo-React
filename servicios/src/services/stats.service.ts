@@ -28,12 +28,26 @@ export const statsService = {
       }
     });
 
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+
+    const monthlyIncomeResult = await prisma.payment.aggregate({
+      where: {
+        status: 'COMPLETADO',
+        paid_at: {
+          gte: monthStart,
+          lt: monthEnd,
+        },
+      },
+      _sum: { amount: true },
+    });
+
     return {
       totalPatients,
       totalDoctors,
       todayAppointments,
       pendingAppointments,
-      monthlyIncome: 0
+      monthlyIncome: monthlyIncomeResult._sum.amount ?? 0
     };
   }
 };
