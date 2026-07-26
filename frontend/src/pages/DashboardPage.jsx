@@ -203,7 +203,8 @@ const DentistDashboard = ({ user }) => {
       todayEnd.setHours(23, 59, 59, 999);
       const data = await appointmentService.getAll(
         today.toISOString(),
-        todayEnd.toISOString()
+        todayEnd.toISOString(),
+        { doctorId: user.id }
       );
       setAppointments(data);
     } catch (err) {
@@ -211,7 +212,7 @@ const DentistDashboard = ({ user }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user.id]);
 
   useEffect(() => { load(); }, [load]);
 

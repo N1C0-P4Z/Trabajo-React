@@ -294,17 +294,17 @@ const AgendaPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Doctor filter — hidden for PATIENT */}
+            {/* Dentist filter — hidden for PATIENT */}
             {!isPatient && (
               <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Todos los doctores" />
+                  <SelectValue placeholder="Todos los dentistas" />
                 </SelectTrigger>
                 <SelectContent position="popper" side="bottom">
-                  <SelectItem value="all">Todos los doctores</SelectItem>
+                  <SelectItem value="all">Todos los dentistas</SelectItem>
                   {doctors.map((doc) => (
                     <SelectItem key={doc.id} value={String(doc.id)}>
-                      Dr/a. {doc.first_name} {doc.last_name}
+                      {doc.first_name} {doc.last_name}
                     </SelectItem>
                   ))}
                 </SelectContent>

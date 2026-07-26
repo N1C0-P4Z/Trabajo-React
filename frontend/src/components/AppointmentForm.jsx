@@ -126,7 +126,7 @@ const AppointmentForm = ({
       return;
     }
     if (!formDoctorId) {
-      setError('Seleccioná un doctor');
+      setError('Seleccioná un dentista');
       return;
     }
     if (!selectedDate) {
@@ -222,12 +222,12 @@ const AppointmentForm = ({
               </div>
             )}
 
-            {/* Doctor */}
+            {/* Dentist */}
             <div className="grid gap-2">
-              <Label htmlFor="doctor">Doctor/a</Label>
+              <Label htmlFor="doctor">Dentista/a</Label>
               <Select value={formDoctorId} onValueChange={setFormDoctorId}>
                 <SelectTrigger id="doctor">
-                  <SelectValue placeholder="Seleccionar doctor..." />
+                  <SelectValue placeholder="Seleccionar dentista..." />
                 </SelectTrigger>
                 <SelectContent>
                   {doctors.map((d) => (
