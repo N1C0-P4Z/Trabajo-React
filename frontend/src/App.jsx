@@ -13,6 +13,7 @@ import DoctorProfilePage from './pages/DoctorProfilePage';
 import PatientsPage from './pages/PatientsPage';
 import PatientProfilePage from './pages/PatientProfilePage';
 import ProfilePage from './pages/ProfilePage';
+import PaymentsPage from './pages/PaymentsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
@@ -110,16 +111,13 @@ function App() {
             </div>
           } 
         />
-        <Route 
-          path="/payments" 
+        <Route
+          path="/payments"
           element={
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground mb-2">Pagos</h1>
-                <p className="text-muted-foreground">Próximamente...</p>
-              </div>
-            </div>
-          } 
+            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
+              <PaymentsPage />
+            </RoleProtectedRoute>
+          }
         />
       </Route>
 

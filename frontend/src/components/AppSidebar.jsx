@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck, User } from 'lucide-react';
+import DevRoleSwitcher from './DevRoleSwitcher';
 
 const menuItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -59,7 +60,7 @@ const titleMap = {
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, realUser, logout } = useAuth();
   const { open, toggleSidebar, isMobile } = useSidebar();
 
   const visibleMenuItems = (() => {
@@ -154,9 +155,11 @@ const AppSidebar = () => {
           {/* Footer */}
           <SidebarFooter>
             <div className="border-t border-sidebar-border px-4 py-3">
-              {user && (
+              <DevRoleSwitcher />
+              {realUser && (
                 <p className="text-xs text-sidebar-foreground/60 mb-2 truncate">
-                  {user.first_name} {user.last_name}
+                  {realUser.first_name} {realUser.last_name}
+                  {user?.role !== realUser.role ? ` · simulando ${user.role}` : ''}
                 </p>
               )}
               <SidebarMenu>
