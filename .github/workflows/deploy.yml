@@ -104,6 +104,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
           script: |
+            set -e
             cd ~/servicios
             npm install --production
             npx prisma generate
