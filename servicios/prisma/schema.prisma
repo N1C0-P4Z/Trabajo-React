@@ -19,6 +19,7 @@ model User {
   specialty            String?
   license_number       String?         @unique
   is_active            Boolean         @default(true)
+  emailVerified        Boolean         @default(false)
   avatar_url           String?
   created_at           DateTime        @default(now())
   patient              Patient?
@@ -26,6 +27,17 @@ model User {
   doctor_appointments  Appointment[]   @relation("DoctorAppointments")
   patient_payments     Payment[]       @relation("PatientPayments")
   recorded_payments    Payment[]       @relation("RecordedPayments")
+  verificationTokens   EmailVerificationToken[]
+  auditLogs            AuditLog[]
+}
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Patient {
@@ -88,4 +100,15 @@ model Payment {
   patient         User         @relation("PatientPayments", fields: [patient_id], references: [id])
   appointment     Appointment? @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
   recorder        User?        @relation("RecordedPayments", fields: [created_by], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  action     String   // READ, CREATE, UPDATE, DELETE
+  resource   String   // patient, appointment, payment
+  resourceId Int?
+  ipAddress  String
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
