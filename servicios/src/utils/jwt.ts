@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET: string = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+import { JWT_SECRET } from '../config/security';
 
 export const generateToken = (payload: object): string => {
   const expiresIn: string = process.env.JWT_EXPIRES_IN || '24h';

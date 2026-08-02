@@ -3,13 +3,19 @@ const bcrypt = require('bcrypt');
 
 const prisma = new PrismaClient();
 
+const adminPassword = process.env.ADMIN_PASSWORD;
+if (!adminPassword) {
+  console.error('[SEED] ADMIN_PASSWORD environment variable is required. Aborting.');
+  process.exit(1);
+}
+
 async function main() {
   const existingUser = await prisma.user.findUnique({
     where: { username: 'admin' }
   });
 
   if (!existingUser) {
-    const hash = bcrypt.hashSync('secret123', 10);
+    const hash = bcrypt.hashSync(adminPassword, 10);
     await prisma.user.create({
       data: {
         username: 'admin',
@@ -21,7 +27,7 @@ async function main() {
         role: 'SUPER_ADMIN'
       }
     });
-    console.log('Default user created: admin / secret123');
+    console.log('Default user created: admin (password from ADMIN_PASSWORD env)');
   } else {
     console.log('Default user already exists');
   }

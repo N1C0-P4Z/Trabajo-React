@@ -12,8 +12,10 @@ import { BODY_SIZE_LIMIT } from './config/security';
 
 const app = express();
 
-// Security headers (Helmet)
-app.use(helmet());
+// Security headers (Helmet) — CORP relaxed for cross-origin static assets (avatars)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // Disable x-powered-by
 app.disable('x-powered-by');
