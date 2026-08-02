@@ -3,11 +3,20 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import routes from './routes';
 import { AppError } from './utils/errors';
+import { BODY_SIZE_LIMIT } from './config/security';
 
 const app = express();
+
+// Security headers (Helmet)
+app.use(helmet());
+
+// Disable x-powered-by
+app.disable('x-powered-by');
 
 // CORS — permite cookies cross-origin para desarrollo local
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -18,8 +27,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
+// Body parser with size limit
+app.use(express.json({ limit: BODY_SIZE_LIMIT }));
 app.use(cookieParser());
+
+// Static file serving for uploaded avatars
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -34,6 +47,12 @@ app.use('/', routes);
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err.message);
+
+  // Payload Too Large (express.json limit)
+  if (err.type === 'entity.too.large') {
+    res.status(413).json({ error: 'Payload too large. Maximum body size is 1MB.' });
+    return;
+  }
 
   // AppError: structured error with statusCode and optional field
   if (err instanceof AppError) {

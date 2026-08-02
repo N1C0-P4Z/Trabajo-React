@@ -98,5 +98,42 @@ export const userController = {
     } catch (error) {
       next(error);
     }
+  },
+
+  async getMeData(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.userId;
+      const data = await userService.exportUserData(userId);
+      res.json(data);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteMe(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.userId;
+      const result = await userService.deleteUserAccount(userId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async uploadPhoto(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.userId;
+      const photo = (req as any).processedPhoto;
+
+      if (!photo || !photo.avatar_url) {
+        res.status(400).json({ error: 'No processed photo found' });
+        return;
+      }
+
+      const updated = await userService.updateAvatar(userId, photo.avatar_url);
+      res.json({ avatar_url: updated.avatar_url });
+    } catch (error) {
+      next(error);
+    }
   }
 };
