@@ -6,6 +6,14 @@ export const authController = {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const data = req.body;
+
+      // CON-5: Backend consent validation — Art. 5 Ley 25.326
+      if (!data.consent) {
+        return res.status(400).json({
+          error: 'Consentimiento requerido. Debe aceptar la política de privacidad.'
+        });
+      }
+
       const ALLOWED_SELF_REGISTER_ROLES = ['PATIENT', 'DENTIST', 'SECRETARY'];
       const role = data.role && ALLOWED_SELF_REGISTER_ROLES.includes(data.role)
         ? data.role
