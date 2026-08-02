@@ -7,9 +7,9 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
+      } catch {
+        // Logout failed silently — token cookie cleared regardless
+      }
   };
 
   return (

@@ -1,10 +1,11 @@
 /**
  * @fileoverview Formulario de registro público para pacientes.
  * Recolecta datos personales, datos médicos (obra social, alergias, etc.)
- * y credenciales de acceso. Al registrarse redirige al login.
+ * y credenciales de acceso. Incluye reCAPTCHA v2, validación de complejidad
+ * de contraseña, aviso de privacidad y checkbox de consentimiento (Ley 25.326).
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +19,10 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ThemeToggle from './ThemeToggle';
+import PrivacyPolicy from './PrivacyPolicy';
 import { authService, FieldError } from '../services/authService';
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
 
 const OBRA_SOCIAL_OPTIONS = [
   'Ninguna',
@@ -29,6 +33,62 @@ const OBRA_SOCIAL_OPTIONS = [
   'Prevención Salud',
   'Otra',
 ];
+
+/**
+ * Validates password complexity: 8+ chars, 1 uppercase, 1 lowercase, 1 digit.
+ * Returns error string or null.
+ */
+const validatePasswordComplexity = (value) => {
+  if (!value) return 'Completá tu contraseña';
+  if (value.length < 8) return 'Mínimo 8 caracteres';
+  if (!/[A-Z]/.test(value)) return 'Debe tener al menos una mayúscula';
+  if (!/[a-z]/.test(value)) return 'Debe tener al menos una minúscula';
+  if (!/[0-9]/.test(value)) return 'Debe tener al menos un número';
+  return null;
+};
+
+/**
+ * Password strength indicator.
+ */
+const PasswordStrength = ({ password }) => {
+  if (!password) return null;
+
+  const checks = [
+    { label: '8+ caracteres', pass: password.length >= 8 },
+    { label: 'Una mayúscula', pass: /[A-Z]/.test(password) },
+    { label: 'Una minúscula', pass: /[a-z]/.test(password) },
+    { label: 'Un número', pass: /[0-9]/.test(password) },
+  ];
+
+  const passed = checks.filter((c) => c.pass).length;
+
+  return (
+    <div className="space-y-1 mt-1">
+      <div className="flex gap-1">
+        {checks.map((c, i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full ${
+              c.pass ? 'bg-green-500' : 'bg-border'
+            }`}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+        {checks.map((c, i) => (
+          <span
+            key={i}
+            className={`text-[10px] ${
+              c.pass ? 'text-green-600' : 'text-muted-foreground'
+            }`}
+          >
+            {c.pass ? '✓' : '○'} {c.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const moveCursorToEnd = (e) => {
   const input = e.target;
@@ -90,6 +150,55 @@ const RegisterForm = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const captchaRef = useRef(null);
+  const captchaWidgetId = useRef(null);
+
+  // Load reCAPTCHA script and render widget
+  const renderCaptcha = useCallback(() => {
+    if (!RECAPTCHA_SITE_KEY || !captchaRef.current || !window.grecaptcha) return;
+    if (captchaWidgetId.current !== null) {
+      try {
+        window.grecaptcha.reset(captchaWidgetId.current);
+      } catch {
+        // Widget may not be initialized yet
+      }
+      return;
+    }
+    captchaWidgetId.current = window.grecaptcha.render(captchaRef.current, {
+      sitekey: RECAPTCHA_SITE_KEY,
+      callback: (token) => setCaptchaToken(token),
+      'expired-callback': () => setCaptchaToken(null),
+      'error-callback': () => setCaptchaToken(null),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return;
+
+    if (window.grecaptcha && window.grecaptcha.render) {
+      renderCaptcha();
+      return;
+    }
+
+    const existingScript = document.querySelector(
+      'script[src="https://www.google.com/recaptcha/api.js"]'
+    );
+    if (existingScript) {
+      existingScript.addEventListener('load', renderCaptcha);
+      return () => existingScript.removeEventListener('load', renderCaptcha);
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    script.addEventListener('load', renderCaptcha);
+    document.head.appendChild(script);
+
+    return () => script.removeEventListener('load', renderCaptcha);
+  }, [renderCaptcha]);
 
   const validateField = (name, value) => {
     switch (name) {
@@ -122,9 +231,7 @@ const RegisterForm = () => {
         if (value.trim() && !/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato inválido. Ej: +54 9 11 1234-5678';
         break;
       case 'password':
-        if (!value) return 'Completá tu contraseña';
-        if (value.length < 6) return 'Mínimo 6 caracteres';
-        break;
+        return validatePasswordComplexity(value);
       case 'confirmPassword':
         if (!value) return 'Repetí tu contraseña';
         if (value !== formData.password) return 'Las contraseñas no coinciden';
@@ -175,6 +282,11 @@ const RegisterForm = () => {
       if (error) newErrors[key] = error;
     });
 
+    // Consent is required (Art. 5 Ley 25.326)
+    if (!consent) {
+      newErrors.consent = 'Debés aceptar la política de privacidad para registrarte';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -197,7 +309,9 @@ const RegisterForm = () => {
         telefono_emergencia: formData.telefono_emergencia.trim() || undefined,
         alergias: formData.alergias.trim() || undefined,
         notas: formData.notas.trim() || undefined,
-        password: formData.password
+        password: formData.password,
+        captchaToken: captchaToken || undefined,
+        consent: true,
       });
 
       toast.success('Cuenta creada exitosamente', {
@@ -489,6 +603,7 @@ const RegisterForm = () => {
               className="h-9 bg-input border-border text-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
             <FieldMessage message={errors.password} />
+            <PasswordStrength password={formData.password} />
           </div>
 
           {/* Repetir contraseña */}
@@ -518,6 +633,53 @@ const RegisterForm = () => {
             {errors.submit}
           </div>
         )}
+
+        {/* ──────── PRIVACIDAD Y CONSENTIMIENTO ──────── */}
+        <SectionDivider label="Privacidad" />
+
+        {/* reCAPTCHA v2 widget */}
+        {RECAPTCHA_SITE_KEY && (
+          <div className="flex justify-center">
+            <div ref={captchaRef} />
+          </div>
+        )}
+
+        {/* Privacy notice (Art. 6 Ley 25.326) */}
+        <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground leading-relaxed">
+          <p>
+            Tus datos serán utilizados exclusivamente para la prestación del servicio
+            odontológico. No serán cedidos a terceros salvo obligación legal. Podés
+            ejercer tus derechos de acceso, rectificación, cancelación y oposición
+            (ARCO) desde tu perfil.{' '}
+            <PrivacyPolicy />
+          </p>
+        </div>
+
+        {/* Consent checkbox (Art. 5 Ley 25.326) */}
+        <div className="space-y-2">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => {
+                setConsent(e.target.checked);
+                if (e.target.checked) {
+                  setErrors(prev => {
+                    const next = { ...prev };
+                    delete next.consent;
+                    return next;
+                  });
+                }
+              }}
+              disabled={loading}
+              className="mt-0.5 size-4 rounded border-border accent-primary"
+            />
+            <span className="text-sm text-card-foreground">
+              Acepto la política de privacidad
+            </span>
+          </label>
+          <FieldMessage message={errors.consent} />
+        </div>
 
         {/* Register button */}
         <Button

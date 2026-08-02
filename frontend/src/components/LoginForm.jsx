@@ -1,10 +1,10 @@
 /**
  * @fileoverview Formulario de inicio de sesión con usuario/email y contraseña.
- * Al hacer submit llama al contexto de autenticación y redirige al dashboard.
- * También ofrece links para registrarse como paciente o como personal de la clínica.
+ * Incluye reCAPTCHA v2. Al hacer submit llama al contexto de autenticación
+ * y redirige al dashboard. Ofrece links para registrarse como paciente o personal.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from "@/components/ui/button"
@@ -12,9 +12,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import ThemeToggle from './ThemeToggle';
 
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+
 /**
- * Formulario de inicio de sesión.
- * Llama a login() del AuthContext con usuario/email y contraseña.
+ * Formulario de inicio de sesión con reCAPTCHA v2.
+ * Llama a login() del AuthContext con usuario/email, contraseña y captcha token.
  * Muestra errores y estado de carga, y redirige al dashboard al iniciar sesión.
  * 
  * @returns {JSX.Element}
@@ -23,7 +25,58 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const captchaRef = useRef(null);
+  const captchaWidgetId = useRef(null);
   const { login, loading, error } = useAuth();
+
+  // Load reCAPTCHA script and render widget
+  const renderCaptcha = useCallback(() => {
+    if (!RECAPTCHA_SITE_KEY || !captchaRef.current || !window.grecaptcha) return;
+    // Reset if already rendered
+    if (captchaWidgetId.current !== null) {
+      try {
+        window.grecaptcha.reset(captchaWidgetId.current);
+      } catch {
+        // Widget may not be initialized yet
+      }
+      return;
+    }
+    captchaWidgetId.current = window.grecaptcha.render(captchaRef.current, {
+      sitekey: RECAPTCHA_SITE_KEY,
+      callback: (token) => setCaptchaToken(token),
+      'expired-callback': () => setCaptchaToken(null),
+      'error-callback': () => setCaptchaToken(null),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return;
+
+    // If script already loaded
+    if (window.grecaptcha && window.grecaptcha.render) {
+      renderCaptcha();
+      return;
+    }
+
+    // Load script dynamically
+    const existingScript = document.querySelector(
+      'script[src="https://www.google.com/recaptcha/api.js"]'
+    );
+    if (existingScript) {
+      existingScript.addEventListener('load', renderCaptcha);
+      return () => existingScript.removeEventListener('load', renderCaptcha);
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    script.addEventListener('load', renderCaptcha);
+    document.head.appendChild(script);
+
+    return () => script.removeEventListener('load', renderCaptcha);
+  }, [renderCaptcha]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,9 +86,9 @@ const LoginForm = () => {
     }
 
     try {
-      await login(username, password);
-    } catch (err) {
-      console.error('Login failed:', err);
+      await login(username, password, captchaToken);
+    } catch {
+      // Error handled by AuthContext (shows toast/error message)
     }
   };
 
@@ -75,7 +128,7 @@ const LoginForm = () => {
             type="password"
             autoComplete="current-password"
             required
-            placeholder="secret123"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
@@ -86,6 +139,13 @@ const LoginForm = () => {
         {error && (
           <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-xl">
             {error}
+          </div>
+        )}
+
+        {/* reCAPTCHA v2 widget */}
+        {RECAPTCHA_SITE_KEY && (
+          <div className="flex justify-center">
+            <div ref={captchaRef} />
           </div>
         )}
 

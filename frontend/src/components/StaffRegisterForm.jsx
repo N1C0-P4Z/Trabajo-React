@@ -1,7 +1,7 @@
 /**
  * @fileoverview Formulario de registro público para personal de la clínica
- * (dentistas y secretarios/as). A diferencia del registro de pacientes, no
- * pide datos médicos (sin obra social, DNI, alergias, etc.).
+ * (dentistas y secretarios/as). Incluye aviso de privacidad y checkbox de
+ * consentimiento (Ley 25.326). No pide datos médicos.
  */
 
 import React, { useState } from 'react';
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ThemeToggle from './ThemeToggle';
+import PrivacyPolicy from './PrivacyPolicy';
 import { authService, FieldError } from '../services/authService';
 
 const ROLE_OPTIONS = [
@@ -79,6 +80,7 @@ const StaffRegisterForm = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   const validateField = (name, value) => {
     switch (name) {
@@ -105,7 +107,10 @@ const StaffRegisterForm = () => {
         break;
       case 'password':
         if (!value) return 'Completá tu contraseña';
-        if (value.length < 6) return 'Mínimo 6 caracteres';
+        if (value.length < 8) return 'Mínimo 8 caracteres';
+        if (!/[A-Z]/.test(value)) return 'Debe tener al menos una mayúscula';
+        if (!/[a-z]/.test(value)) return 'Debe tener al menos una minúscula';
+        if (!/[0-9]/.test(value)) return 'Debe tener al menos un número';
         break;
       case 'confirmPassword':
         if (!value) return 'Repetí tu contraseña';
@@ -152,6 +157,11 @@ const StaffRegisterForm = () => {
       if (error) newErrors[key] = error;
     });
 
+    // Consent is required (Art. 5 Ley 25.326)
+    if (!consent) {
+      newErrors.consent = 'Debés aceptar la política de privacidad para registrarte';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -168,7 +178,8 @@ const StaffRegisterForm = () => {
         last_name: formData.last_name.trim(),
         phone: formData.phone.trim(),
         role: formData.role,
-        password: formData.password
+        password: formData.password,
+        consent: true,
       });
 
       toast.success('Cuenta creada exitosamente', {
@@ -369,6 +380,46 @@ const StaffRegisterForm = () => {
             {errors.submit}
           </div>
         )}
+
+        {/* ──────── PRIVACIDAD Y CONSENTIMIENTO ──────── */}
+        <SectionDivider label="Privacidad" />
+
+        {/* Privacy notice (Art. 6 Ley 25.326) */}
+        <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground leading-relaxed">
+          <p>
+            Tus datos serán utilizados exclusivamente para la gestión interna de la
+            clínica. No serán cedidos a terceros salvo obligación legal. Podés ejercer
+            tus derechos de acceso, rectificación, cancelación y oposición (ARCO) desde
+            tu perfil.{' '}
+            <PrivacyPolicy />
+          </p>
+        </div>
+
+        {/* Consent checkbox (Art. 5 Ley 25.326) */}
+        <div className="space-y-2">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => {
+                setConsent(e.target.checked);
+                if (e.target.checked) {
+                  setErrors(prev => {
+                    const next = { ...prev };
+                    delete next.consent;
+                    return next;
+                  });
+                }
+              }}
+              disabled={loading}
+              className="mt-0.5 size-4 rounded border-border accent-primary"
+            />
+            <span className="text-sm text-card-foreground">
+              Acepto la política de privacidad
+            </span>
+          </label>
+          <FieldMessage message={errors.consent} />
+        </div>
 
         <Button
           type="submit"
