@@ -16,8 +16,10 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Headers de seguridad; CORP abierto para servir avatars cross-origin
+// HSTS off: el hosting de la facultad sirve por HTTP sin TLS
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  hsts: false,
 }));
 
 app.disable('x-powered-by');
@@ -96,6 +98,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
   if (err.message === 'Invalid credentials') {
     res.status(401).json({ error: err.message });
+    return;
+  }
+
+  if (err.message === 'Email no verificado. Revisá tu bandeja de entrada.') {
+    res.status(403).json({ error: err.message });
     return;
   }
 

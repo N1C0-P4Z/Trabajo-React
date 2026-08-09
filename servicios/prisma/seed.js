@@ -24,7 +24,8 @@ async function main() {
         last_name: 'Sistema',
         phone: '+54 9 11 1234-5678',
         password_hash: hash,
-        role: 'SUPER_ADMIN'
+        role: 'SUPER_ADMIN',
+        emailVerified: true,
       }
     });
     console.log('Default user created: admin (password from ADMIN_PASSWORD env)');
