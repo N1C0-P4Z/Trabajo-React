@@ -12,6 +12,9 @@ import { BODY_SIZE_LIMIT } from './config/security';
 
 const app = express();
 
+// Apache hace de proxy inverso y manda X-Forwarded-For (necesario para rate-limit)
+app.set('trust proxy', 1);
+
 // Headers de seguridad; CORP abierto para servir avatars cross-origin
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
