@@ -2,6 +2,7 @@
  * @fileoverview Layout principal de la aplicación una vez autenticado.
  * Contiene la barra lateral (AppSidebar), la barra superior con toggle de tema
  * y el área de contenido donde se renderizan las páginas protegidas.
+ * Incluye el banner de confidencialidad para DENTIST y SECRETARY.
  */
 
 import React from 'react';
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import AppSidebar from './AppSidebar';
 import ThemeToggle from './ThemeToggle';
+import ConfidentialityNotice from './ConfidentialityNotice';
 
 /**
  * Layout con sidebar, header y área de contenido principal.
@@ -40,6 +42,7 @@ const DashboardLayout = ({ children }) => {
 
           {/* Page content */}
           <main className="flex-1 p-6">
+            <ConfidentialityNotice />
             {children}
           </main>
         </div>

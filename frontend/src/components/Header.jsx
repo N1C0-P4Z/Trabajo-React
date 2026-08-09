@@ -7,8 +7,8 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (err) {
-      console.error('Logout failed:', err);
+    } catch {
+      // cookie se limpia igual del lado del servidor
     }
   };
 

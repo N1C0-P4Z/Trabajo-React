@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { User, Lock, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import DentistPhotoUpload from '../components/DentistPhotoUpload';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -216,6 +217,24 @@ const ProfilePage = () => {
         <div className="rounded-xl bg-destructive/10 text-destructive text-sm p-3">
           {error}
         </div>
+      )}
+
+      {/* Dentist photo upload */}
+      {user?.role === 'DENTIST' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="size-5" />
+              Foto de perfil
+            </CardTitle>
+            <CardDescription>
+              Tu foto será visible para pacientes y personal de la clínica
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <DentistPhotoUpload user={user} onUploadSuccess={refreshUser} />
+          </CardContent>
+        </Card>
       )}
 
       <form onSubmit={handleSubmit}>

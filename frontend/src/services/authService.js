@@ -30,14 +30,14 @@ export const authService = {
     return response.json();
   },
 
-  async login(username, password) {
+  async login(username, password, captchaToken) {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include', // Important: include cookies
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password, captchaToken }),
     });
 
     if (!response.ok) {
@@ -78,9 +78,24 @@ export const authService = {
     return response.json();
   },
 
-  // Helper function to check if user is authenticated
-  // Note: This is a synchronous check of local state
-  // The actual validation happens on the server with each request
+  async uploadPhoto(file) {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const response = await fetch(`${API_URL}/users/me/photo`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al subir foto');
+    }
+
+    return response.json();
+  },
+
   isAuthenticated(user) {
     return user !== null && user !== undefined;
   }
