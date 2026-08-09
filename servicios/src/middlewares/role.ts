@@ -7,7 +7,7 @@ export const requireRole = (...roles: string[]) => {
       return res.status(401).json({ error: 'Token no proporcionado' });
     }
     if (!roles.includes(user.role)) {
-      return res.status(403).json({ error: 'No autorizado para gestionar doctores' });
+      return res.status(403).json({ error: 'No autorizado' });
     }
     next();
   };

@@ -6,6 +6,13 @@ export const authController = {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const data = req.body;
+
+      if (!data.consent) {
+        return res.status(400).json({
+          error: 'Tenés que aceptar la política de privacidad para registrarte.',
+        });
+      }
+
       const ALLOWED_SELF_REGISTER_ROLES = ['PATIENT', 'DENTIST', 'SECRETARY'];
       const role = data.role && ALLOWED_SELF_REGISTER_ROLES.includes(data.role)
         ? data.role

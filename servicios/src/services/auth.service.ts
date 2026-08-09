@@ -1,6 +1,7 @@
 import { comparePassword } from '../utils/bcrypt';
 import { generateToken, verifyToken } from '../utils/jwt';
 import { userRepository } from '../repositories/user.repository';
+import { isEmailVerified } from './email-verification.service';
 
 export const authService = {
   async login(credentials: string, password: string) {
@@ -21,6 +22,14 @@ export const authService = {
     const isValidPassword = await comparePassword(password, user.password_hash);
     if (!isValidPassword) {
       throw new Error('Invalid credentials');
+    }
+
+    // En producción no deja entrar sin email verificado
+    if (process.env.NODE_ENV === 'production') {
+      const verified = await isEmailVerified(user.id);
+      if (!verified) {
+        throw new Error('Email no verificado. Revisá tu bandeja de entrada.');
+      }
     }
 
     const token = generateToken({

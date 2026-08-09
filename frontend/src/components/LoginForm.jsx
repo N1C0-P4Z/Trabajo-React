@@ -1,29 +1,18 @@
-/**
- * @fileoverview Formulario de inicio de sesión con usuario/email y contraseña.
- * Al hacer submit llama al contexto de autenticación y redirige al dashboard.
- * También ofrece links para registrarse como paciente o como personal de la clínica.
- */
-
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useRecaptcha } from '../hooks/useRecaptcha';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import ThemeToggle from './ThemeToggle';
 
-/**
- * Formulario de inicio de sesión.
- * Llama a login() del AuthContext con usuario/email y contraseña.
- * Muestra errores y estado de carga, y redirige al dashboard al iniciar sesión.
- * 
- * @returns {JSX.Element}
- */
 const LoginForm = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
+  const { siteKey, token: captchaToken, captchaRef } = useRecaptcha();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,16 +21,19 @@ const LoginForm = () => {
       return;
     }
 
+    if (siteKey && !captchaToken) {
+      return;
+    }
+
     try {
-      await login(username, password);
-    } catch (err) {
-      console.error('Login failed:', err);
+      await login(username, password, captchaToken);
+    } catch {
+      // el error lo muestra AuthContext
     }
   };
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-card-foreground">Iniciar Sesión</h2>
         <ThemeToggle />
@@ -51,7 +43,6 @@ const LoginForm = () => {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email / Username */}
         <div className="space-y-2">
           <Label htmlFor="username" className="text-sm font-medium text-card-foreground">Usuario o Email</Label>
           <Input
@@ -67,7 +58,6 @@ const LoginForm = () => {
           />
         </div>
 
-        {/* Password */}
         <div className="space-y-2">
           <Label htmlFor="password" className="text-sm font-medium text-card-foreground">Contraseña</Label>
           <Input
@@ -75,7 +65,7 @@ const LoginForm = () => {
             type="password"
             autoComplete="current-password"
             required
-            placeholder="secret123"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
@@ -89,10 +79,15 @@ const LoginForm = () => {
           </div>
         )}
 
-        {/* Login button */}
+        {siteKey && (
+          <div className="flex justify-center min-h-[78px]">
+            <div ref={captchaRef} />
+          </div>
+        )}
+
         <Button
           type="submit"
-          disabled={loading}
+          disabled={loading || (siteKey && !captchaToken)}
           className="w-full h-9 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-medium transition-colors"
         >
           {loading ? 'Ingresando...' : 'Ingresar'}

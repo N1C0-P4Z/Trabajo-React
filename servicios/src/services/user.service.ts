@@ -2,6 +2,8 @@ import { hashPassword, comparePassword } from '../utils/bcrypt';
 import { userRepository } from '../repositories/user.repository';
 import { patientRepository } from '../repositories/patient.repository';
 import { AppError } from '../utils/errors';
+import { generateVerificationToken } from './email-verification.service';
+import { prisma } from '../config/database';
 
 // ============================================================
 // CATÁLOGO DE ESPECIALIDADES
@@ -133,8 +135,20 @@ function validatePassword(password: string): string {
     throw new AppError('Completá tu contraseña', 400, 'password');
   }
 
-  if (password.length < 6) {
-    throw new AppError('Mínimo 6 caracteres', 400, 'password');
+  if (password.length < 8) {
+    throw new AppError('La contraseña debe tener al menos 8 caracteres', 400, 'password');
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    throw new AppError('La contraseña debe contener al menos una letra mayúscula', 400, 'password');
+  }
+
+  if (!/[a-z]/.test(password)) {
+    throw new AppError('La contraseña debe contener al menos una letra minúscula', 400, 'password');
+  }
+
+  if (!/[0-9]/.test(password)) {
+    throw new AppError('La contraseña debe contener al menos un número', 400, 'password');
   }
 
   return password;
@@ -268,6 +282,8 @@ export const userService = {
       });
     }
 
+    await generateVerificationToken(newUser.id);
+
     return newUser;
   },
 
@@ -327,9 +343,7 @@ export const userService = {
         throw new AppError('La contraseña actual no es correcta', 400, 'current_password');
       }
 
-      if (data.new_password.length < 6) {
-        throw new AppError('La nueva contraseña debe tener al menos 6 caracteres', 400, 'new_password');
-      }
+      validatePassword(data.new_password);
 
       updateData.password_hash = await hashPassword(data.new_password);
     }
@@ -443,5 +457,150 @@ export const userService = {
 
   getSpecialties() {
     return [...SPECIALTIES];
+  },
+
+  /** Exporta los datos del usuario (sin password ni tokens). */
+  async exportUserData(userId: number) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        username: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        phone: true,
+        role: true,
+        created_at: true,
+      },
+    });
+
+    if (!user) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+
+    const result: any = { user };
+
+    if (user.role === 'PATIENT') {
+      const patient = await prisma.patient.findUnique({
+        where: { user_id: userId },
+        select: {
+          dni: true,
+          obra_social: true,
+          numero_afiliado: true,
+          fecha_nacimiento: true,
+          direccion: true,
+          telefono_alternativo: true,
+          contacto_emergencia: true,
+          telefono_emergencia: true,
+          alergias: true,
+          notas: true,
+        },
+      });
+      result.patient = patient;
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        OR: [{ patient_id: userId }, { doctor_id: userId }],
+      },
+      select: {
+        id: true,
+        datetime: true,
+        duration_minutes: true,
+        status: true,
+        notes: true,
+        type: { select: { name: true } },
+      },
+      orderBy: { datetime: 'desc' },
+    });
+    result.appointments = appointments;
+
+    const payments = await prisma.payment.findMany({
+      where: { patient_id: userId },
+      select: {
+        id: true,
+        amount: true,
+        payment_method: true,
+        status: true,
+        notes: true,
+        paid_at: true,
+      },
+      orderBy: { paid_at: 'desc' },
+    });
+    result.payments = payments;
+
+    return result;
+  },
+
+  /** Baja de cuenta: anonimiza datos personales y desactiva el usuario. */
+  async deleteUserAccount(userId: number) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { patient: true },
+    });
+
+    if (!user) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          is_active: false,
+          email: `anonimizado-${userId}@eliminado.local`,
+          first_name: 'Eliminado',
+          last_name: 'Usuario',
+          phone: '',
+          username: `eliminado-${userId}`,
+          password_hash: 'ELIMINADO',
+          specialty: null,
+          license_number: null,
+          avatar_url: null,
+        },
+      });
+
+      if (user.patient) {
+        await tx.patient.update({
+          where: { user_id: userId },
+          data: {
+            dni: `ELIMINADO-${userId}`,
+            obra_social: null,
+            numero_afiliado: null,
+            fecha_nacimiento: null,
+            direccion: null,
+            telefono_alternativo: null,
+            contacto_emergencia: null,
+            telefono_emergencia: null,
+            alergias: null,
+            notas: null,
+          },
+        });
+      }
+    });
+
+    return { message: 'Cuenta eliminada exitosamente' };
+  },
+
+  async updateAvatar(userId: number, avatarUrl: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { avatar_url: avatarUrl },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        avatar_url: true,
+      },
+    });
+
+    return updated;
   }
 };

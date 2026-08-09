@@ -110,12 +110,12 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = useCallback(async (username, password) => {
+  const login = useCallback(async (username, password, captchaToken) => {
     setError(null);
     setLoading(true);
 
     try {
-      const userData = await authService.login(username, password);
+      const userData = await authService.login(username, password, captchaToken);
       setUser(userData);
       return userData;
     } catch (err) {
