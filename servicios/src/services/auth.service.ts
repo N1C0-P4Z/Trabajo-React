@@ -24,11 +24,11 @@ export const authService = {
       throw new Error('Invalid credentials');
     }
 
-    // Block login for unverified emails in PROD mode only
+    // En producción no deja entrar sin email verificado
     if (process.env.NODE_ENV === 'production') {
       const verified = await isEmailVerified(user.id);
       if (!verified) {
-        throw new Error('Email not verified. Please check your inbox.');
+        throw new Error('Email no verificado. Revisá tu bandeja de entrada.');
       }
     }
 

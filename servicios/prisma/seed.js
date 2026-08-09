@@ -32,7 +32,7 @@ async function main() {
     console.log('Default user already exists');
   }
 
-  // ─── Appointment Types ──────────────────────────────────────────
+  // Tipos de turno
   const tipos = [
     {
       name: 'Consulta General',
@@ -61,7 +61,7 @@ async function main() {
     }
   }
 
-  // ─── Sample Appointment (next business day at 10:00) ───────────
+  // Turno de ejemplo (próximo día hábil a las 10:00)
   const consulta = tiposCreados.find(t => t.name === 'Consulta General');
   const adminUser = await prisma.user.findUnique({ where: { username: 'admin' } });
 

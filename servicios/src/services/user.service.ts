@@ -282,7 +282,6 @@ export const userService = {
       });
     }
 
-    // Generate email verification token (auto-verifies in DEV, generates token in PROD)
     await generateVerificationToken(newUser.id);
 
     return newUser;
@@ -344,7 +343,6 @@ export const userService = {
         throw new AppError('La contraseña actual no es correcta', 400, 'current_password');
       }
 
-      // Apply same complexity rules as registration
       validatePassword(data.new_password);
 
       updateData.password_hash = await hashPassword(data.new_password);
@@ -461,11 +459,7 @@ export const userService = {
     return [...SPECIALTIES];
   },
 
-  /**
-   * ARCO: Export all user data (Access right).
-   * Returns user profile + patient data (if PATIENT) + appointments + payments.
-   * NEVER includes password_hash, tokens, or internal IDs of other users.
-   */
+  /** Exporta los datos del usuario (sin password ni tokens). */
   async exportUserData(userId: number) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -486,7 +480,6 @@ export const userService = {
 
     const result: any = { user };
 
-    // If PATIENT, include patient profile
     if (user.role === 'PATIENT') {
       const patient = await prisma.patient.findUnique({
         where: { user_id: userId },
@@ -506,7 +499,6 @@ export const userService = {
       result.patient = patient;
     }
 
-    // Appointments for this user (as patient or doctor)
     const appointments = await prisma.appointment.findMany({
       where: {
         OR: [{ patient_id: userId }, { doctor_id: userId }],
@@ -523,7 +515,6 @@ export const userService = {
     });
     result.appointments = appointments;
 
-    // Payments for this user (as patient)
     const payments = await prisma.payment.findMany({
       where: { patient_id: userId },
       select: {
@@ -541,11 +532,7 @@ export const userService = {
     return result;
   },
 
-  /**
-   * ARCO: Delete user account (Cancellation right).
-   * Soft-delete: sets is_active=false, purges PII, preserves relational records.
-   * Uses a Prisma transaction for atomicity.
-   */
+  /** Baja de cuenta: anonimiza datos personales y desactiva el usuario. */
   async deleteUserAccount(userId: number) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -557,29 +544,27 @@ export const userService = {
     }
 
     await prisma.$transaction(async (tx) => {
-      // Anonymize PII on User
       await tx.user.update({
         where: { id: userId },
         data: {
           is_active: false,
-          email: `ANONYMIZED-${userId}@deleted.local`,
-          first_name: 'DELETED',
-          last_name: 'USER',
+          email: `anonimizado-${userId}@eliminado.local`,
+          first_name: 'Eliminado',
+          last_name: 'Usuario',
           phone: '',
-          username: `deleted-${userId}`,
-          password_hash: 'DELETED',
+          username: `eliminado-${userId}`,
+          password_hash: 'ELIMINADO',
           specialty: null,
           license_number: null,
           avatar_url: null,
         },
       });
 
-      // Anonymize PII on Patient if exists
       if (user.patient) {
         await tx.patient.update({
           where: { user_id: userId },
           data: {
-            dni: `DELETED-${userId}`,
+            dni: `ELIMINADO-${userId}`,
             obra_social: null,
             numero_afiliado: null,
             fecha_nacimiento: null,
@@ -592,15 +577,11 @@ export const userService = {
           },
         });
       }
-      // Appointments and payments are preserved for audit
     });
 
     return { message: 'Cuenta eliminada exitosamente' };
   },
 
-  /**
-   * Update user's avatar_url after secure upload pipeline validates the file.
-   */
   async updateAvatar(userId: number, avatarUrl: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {

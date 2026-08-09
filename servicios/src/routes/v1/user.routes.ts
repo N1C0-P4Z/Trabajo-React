@@ -6,11 +6,10 @@ import { handlePhotoUpload } from '../../middlewares/upload';
 
 const router = Router();
 
-// ARCO routes: must come before /:id to avoid "me" matching as ID
+// Antes de /:id para que "me" no se tome como id
 router.get('/me/data', authenticateToken, userController.getMeData);
 router.delete('/me', authenticateToken, userController.deleteMe);
 
-// Photo upload: DENTIST only
 router.post('/me/photo', authenticateToken, requireRole('DENTIST'), handlePhotoUpload, userController.uploadPhoto);
 
 // Mutating routes: only SUPER_ADMIN and OWNER can create/update/delete users

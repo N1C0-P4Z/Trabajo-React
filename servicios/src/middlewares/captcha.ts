@@ -3,23 +3,17 @@ import { RECAPTCHA_SECRET } from '../config/security';
 
 const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
 
-/**
- * Middleware that verifies reCAPTCHA v2 token from request body.
- * Token is expected in `req.body.recaptchaToken`.
- * Skips verification when RECAPTCHA_SECRET is empty (DEV mode).
- * Returns 400 on missing or invalid token.
- */
+/** Verifica reCAPTCHA v2. Si no hay RECAPTCHA_SECRET, se omite (desarrollo). */
 export const verifyCaptcha = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  // Skip CAPTCHA in DEV when no secret is configured
   if (!RECAPTCHA_SECRET) {
     next();
     return;
   }
 
-  const token = req.body.recaptchaToken;
+  const token = req.body.captchaToken || req.body.recaptchaToken;
 
   if (!token) {
-    res.status(400).json({ error: 'reCAPTCHA verification failed' });
+    res.status(400).json({ error: 'Falló la verificación de reCAPTCHA' });
     return;
   }
 
@@ -36,12 +30,12 @@ export const verifyCaptcha = async (req: Request, res: Response, next: NextFunct
     const data = await response.json();
 
     if (!data.success) {
-      res.status(400).json({ error: 'reCAPTCHA verification failed' });
+      res.status(400).json({ error: 'Falló la verificación de reCAPTCHA' });
       return;
     }
 
     next();
-  } catch (error) {
-    res.status(400).json({ error: 'reCAPTCHA verification failed' });
+  } catch {
+    res.status(400).json({ error: 'Falló la verificación de reCAPTCHA' });
   }
 };

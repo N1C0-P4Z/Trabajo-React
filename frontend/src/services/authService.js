@@ -78,37 +78,6 @@ export const authService = {
     return response.json();
   },
 
-  // ARCO: Export all user data (Art. 14 Ley 25.326)
-  async exportMyData() {
-    const response = await fetch(`${API_URL}/users/me/data`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al exportar datos');
-    }
-
-    return response.json();
-  },
-
-  // ARCO: Request account deletion (Art. 16 Ley 25.326)
-  async deleteMyAccount() {
-    const response = await fetch(`${API_URL}/users/me`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al eliminar cuenta');
-    }
-
-    return response.json();
-  },
-
-  // Photo upload for DENTIST role (multipart/form-data)
   async uploadPhoto(file) {
     const formData = new FormData();
     formData.append('photo', file);
@@ -127,9 +96,6 @@ export const authService = {
     return response.json();
   },
 
-  // Helper function to check if user is authenticated
-  // Note: This is a synchronous check of local state
-  // The actual validation happens on the server with each request
   isAuthenticated(user) {
     return user !== null && user !== undefined;
   }

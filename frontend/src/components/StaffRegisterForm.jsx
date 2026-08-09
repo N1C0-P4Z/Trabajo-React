@@ -1,9 +1,3 @@
-/**
- * @fileoverview Formulario de registro público para personal de la clínica
- * (dentistas y secretarios/as). Incluye aviso de privacidad y checkbox de
- * consentimiento (Ley 25.326). No pide datos médicos.
- */
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"
@@ -20,6 +14,7 @@ import { toast } from 'sonner';
 import ThemeToggle from './ThemeToggle';
 import PrivacyPolicy from './PrivacyPolicy';
 import { authService, FieldError } from '../services/authService';
+import { useRecaptcha } from '../hooks/useRecaptcha';
 
 const ROLE_OPTIONS = [
   { value: 'DENTIST', label: 'Dentista' },
@@ -81,6 +76,7 @@ const StaffRegisterForm = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
+  const { siteKey, token: captchaToken, captchaRef } = useRecaptcha();
 
   const validateField = (name, value) => {
     switch (name) {
@@ -157,9 +153,12 @@ const StaffRegisterForm = () => {
       if (error) newErrors[key] = error;
     });
 
-    // Consent is required (Art. 5 Ley 25.326)
     if (!consent) {
       newErrors.consent = 'Debés aceptar la política de privacidad para registrarte';
+    }
+
+    if (siteKey && !captchaToken) {
+      newErrors.captcha = 'Completá el captcha para continuar';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -180,6 +179,7 @@ const StaffRegisterForm = () => {
         role: formData.role,
         password: formData.password,
         consent: true,
+        captchaToken: captchaToken || undefined,
       });
 
       toast.success('Cuenta creada exitosamente', {
@@ -381,21 +381,26 @@ const StaffRegisterForm = () => {
           </div>
         )}
 
-        {/* ──────── PRIVACIDAD Y CONSENTIMIENTO ──────── */}
         <SectionDivider label="Privacidad" />
 
-        {/* Privacy notice (Art. 6 Ley 25.326) */}
+        {siteKey && (
+          <div className="space-y-2">
+            <div className="flex justify-center min-h-[78px]">
+              <div ref={captchaRef} />
+            </div>
+            <FieldMessage message={errors.captcha} />
+          </div>
+        )}
+
         <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground leading-relaxed">
           <p>
-            Tus datos serán utilizados exclusivamente para la gestión interna de la
-            clínica. No serán cedidos a terceros salvo obligación legal. Podés ejercer
-            tus derechos de acceso, rectificación, cancelación y oposición (ARCO) desde
-            tu perfil.{' '}
+            Tus datos se usan para la gestión interna de la clínica. No se ceden a
+            terceros salvo obligación legal. Podés pedir acceso o baja de tus datos
+            ante la clínica.{' '}
             <PrivacyPolicy />
           </p>
         </div>
 
-        {/* Consent checkbox (Art. 5 Ley 25.326) */}
         <div className="space-y-2">
           <label className="flex items-start gap-2 cursor-pointer">
             <input

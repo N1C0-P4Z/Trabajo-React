@@ -1,11 +1,4 @@
-/**
- * @fileoverview Formulario de registro público para pacientes.
- * Recolecta datos personales, datos médicos (obra social, alergias, etc.)
- * y credenciales de acceso. Incluye reCAPTCHA v2, validación de complejidad
- * de contraseña, aviso de privacidad y checkbox de consentimiento (Ley 25.326).
- */
-
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,8 +14,7 @@ import { toast } from 'sonner';
 import ThemeToggle from './ThemeToggle';
 import PrivacyPolicy from './PrivacyPolicy';
 import { authService, FieldError } from '../services/authService';
-
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+import { useRecaptcha } from '../hooks/useRecaptcha';
 
 const OBRA_SOCIAL_OPTIONS = [
   'Ninguna',
@@ -34,10 +26,6 @@ const OBRA_SOCIAL_OPTIONS = [
   'Otra',
 ];
 
-/**
- * Validates password complexity: 8+ chars, 1 uppercase, 1 lowercase, 1 digit.
- * Returns error string or null.
- */
 const validatePasswordComplexity = (value) => {
   if (!value) return 'Completá tu contraseña';
   if (value.length < 8) return 'Mínimo 8 caracteres';
@@ -47,9 +35,6 @@ const validatePasswordComplexity = (value) => {
   return null;
 };
 
-/**
- * Password strength indicator.
- */
 const PasswordStrength = ({ password }) => {
   if (!password) return null;
 
@@ -151,54 +136,7 @@ const RegisterForm = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const captchaRef = useRef(null);
-  const captchaWidgetId = useRef(null);
-
-  // Load reCAPTCHA script and render widget
-  const renderCaptcha = useCallback(() => {
-    if (!RECAPTCHA_SITE_KEY || !captchaRef.current || !window.grecaptcha) return;
-    if (captchaWidgetId.current !== null) {
-      try {
-        window.grecaptcha.reset(captchaWidgetId.current);
-      } catch {
-        // Widget may not be initialized yet
-      }
-      return;
-    }
-    captchaWidgetId.current = window.grecaptcha.render(captchaRef.current, {
-      sitekey: RECAPTCHA_SITE_KEY,
-      callback: (token) => setCaptchaToken(token),
-      'expired-callback': () => setCaptchaToken(null),
-      'error-callback': () => setCaptchaToken(null),
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!RECAPTCHA_SITE_KEY) return;
-
-    if (window.grecaptcha && window.grecaptcha.render) {
-      renderCaptcha();
-      return;
-    }
-
-    const existingScript = document.querySelector(
-      'script[src="https://www.google.com/recaptcha/api.js"]'
-    );
-    if (existingScript) {
-      existingScript.addEventListener('load', renderCaptcha);
-      return () => existingScript.removeEventListener('load', renderCaptcha);
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
-    script.async = true;
-    script.defer = true;
-    script.addEventListener('load', renderCaptcha);
-    document.head.appendChild(script);
-
-    return () => script.removeEventListener('load', renderCaptcha);
-  }, [renderCaptcha]);
+  const { siteKey, token: captchaToken, captchaRef } = useRecaptcha();
 
   const validateField = (name, value) => {
     switch (name) {
@@ -282,9 +220,12 @@ const RegisterForm = () => {
       if (error) newErrors[key] = error;
     });
 
-    // Consent is required (Art. 5 Ley 25.326)
     if (!consent) {
       newErrors.consent = 'Debés aceptar la política de privacidad para registrarte';
+    }
+
+    if (siteKey && !captchaToken) {
+      newErrors.captcha = 'Completá el captcha para continuar';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -634,28 +575,26 @@ const RegisterForm = () => {
           </div>
         )}
 
-        {/* ──────── PRIVACIDAD Y CONSENTIMIENTO ──────── */}
         <SectionDivider label="Privacidad" />
 
-        {/* reCAPTCHA v2 widget */}
-        {RECAPTCHA_SITE_KEY && (
-          <div className="flex justify-center">
-            <div ref={captchaRef} />
+        {siteKey && (
+          <div className="space-y-2">
+            <div className="flex justify-center min-h-[78px]">
+              <div ref={captchaRef} />
+            </div>
+            <FieldMessage message={errors.captcha} />
           </div>
         )}
 
-        {/* Privacy notice (Art. 6 Ley 25.326) */}
         <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground leading-relaxed">
           <p>
-            Tus datos serán utilizados exclusivamente para la prestación del servicio
-            odontológico. No serán cedidos a terceros salvo obligación legal. Podés
-            ejercer tus derechos de acceso, rectificación, cancelación y oposición
-            (ARCO) desde tu perfil.{' '}
+            Tus datos se usan solo para la atención odontológica. No se ceden a
+            terceros salvo obligación legal. Podés pedir acceso o baja de tus datos
+            ante la clínica.{' '}
             <PrivacyPolicy />
           </p>
         </div>
 
-        {/* Consent checkbox (Art. 5 Ley 25.326) */}
         <div className="space-y-2">
           <label className="flex items-start gap-2 cursor-pointer">
             <input

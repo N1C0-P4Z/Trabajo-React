@@ -126,7 +126,7 @@ export const userController = {
       const photo = (req as any).processedPhoto;
 
       if (!photo || !photo.avatar_url) {
-        res.status(400).json({ error: 'No processed photo found' });
+        res.status(400).json({ error: 'No se encontró la foto procesada' });
         return;
       }
 

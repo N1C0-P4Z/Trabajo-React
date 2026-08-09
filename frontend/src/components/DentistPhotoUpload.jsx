@@ -1,9 +1,3 @@
-/**
- * @fileoverview Componente de carga de foto de perfil para DENTIST.
- * Permite seleccionar y subir una imagen (PNG/JPEG, máx 2MB).
- * Wired to POST /v1/users/me/photo.
- */
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -15,14 +9,6 @@ import { API_BASE } from '../services/apiConfig';
 const ALLOWED_TYPES = ['image/png', 'image/jpeg'];
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
-/**
- * Componente de carga de foto para dentistas.
- *
- * @param {Object} props
- * @param {Object} props.user - Usuario actual (debe tener avatar_url si ya tiene foto)
- * @param {Function} [props.onUploadSuccess] - Callback tras subida exitosa (recibe { avatar_url })
- * @returns {JSX.Element}
- */
 const DentistPhotoUpload = ({ user, onUploadSuccess }) => {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -37,7 +23,6 @@ const DentistPhotoUpload = ({ user, onUploadSuccess }) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side validation
     if (!ALLOWED_TYPES.includes(file.type)) {
       toast.error('Formato no válido', {
         description: 'Solo se permiten archivos PNG y JPEG.',
@@ -56,7 +41,7 @@ const DentistPhotoUpload = ({ user, onUploadSuccess }) => {
 
     try {
       const result = await authService.uploadPhoto(file);
-      setPreviewUrl(null); // Clear preview, use server URL
+      setPreviewUrl(null);
       toast.success('Foto actualizada', {
         description: 'Tu foto de perfil se actualizó correctamente.',
       });
@@ -69,7 +54,6 @@ const DentistPhotoUpload = ({ user, onUploadSuccess }) => {
       });
     } finally {
       setUploading(false);
-      // Reset file input so the same file can be re-selected
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }

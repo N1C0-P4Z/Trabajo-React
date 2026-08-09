@@ -1,82 +1,18 @@
-/**
- * @fileoverview Formulario de inicio de sesión con usuario/email y contraseña.
- * Incluye reCAPTCHA v2. Al hacer submit llama al contexto de autenticación
- * y redirige al dashboard. Ofrece links para registrarse como paciente o personal.
- */
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useRecaptcha } from '../hooks/useRecaptcha';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import ThemeToggle from './ThemeToggle';
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
-
-/**
- * Formulario de inicio de sesión con reCAPTCHA v2.
- * Llama a login() del AuthContext con usuario/email, contraseña y captcha token.
- * Muestra errores y estado de carga, y redirige al dashboard al iniciar sesión.
- * 
- * @returns {JSX.Element}
- */
 const LoginForm = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const captchaRef = useRef(null);
-  const captchaWidgetId = useRef(null);
   const { login, loading, error } = useAuth();
-
-  // Load reCAPTCHA script and render widget
-  const renderCaptcha = useCallback(() => {
-    if (!RECAPTCHA_SITE_KEY || !captchaRef.current || !window.grecaptcha) return;
-    // Reset if already rendered
-    if (captchaWidgetId.current !== null) {
-      try {
-        window.grecaptcha.reset(captchaWidgetId.current);
-      } catch {
-        // Widget may not be initialized yet
-      }
-      return;
-    }
-    captchaWidgetId.current = window.grecaptcha.render(captchaRef.current, {
-      sitekey: RECAPTCHA_SITE_KEY,
-      callback: (token) => setCaptchaToken(token),
-      'expired-callback': () => setCaptchaToken(null),
-      'error-callback': () => setCaptchaToken(null),
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!RECAPTCHA_SITE_KEY) return;
-
-    // If script already loaded
-    if (window.grecaptcha && window.grecaptcha.render) {
-      renderCaptcha();
-      return;
-    }
-
-    // Load script dynamically
-    const existingScript = document.querySelector(
-      'script[src="https://www.google.com/recaptcha/api.js"]'
-    );
-    if (existingScript) {
-      existingScript.addEventListener('load', renderCaptcha);
-      return () => existingScript.removeEventListener('load', renderCaptcha);
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
-    script.async = true;
-    script.defer = true;
-    script.addEventListener('load', renderCaptcha);
-    document.head.appendChild(script);
-
-    return () => script.removeEventListener('load', renderCaptcha);
-  }, [renderCaptcha]);
+  const { siteKey, token: captchaToken, captchaRef } = useRecaptcha();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,16 +21,19 @@ const LoginForm = () => {
       return;
     }
 
+    if (siteKey && !captchaToken) {
+      return;
+    }
+
     try {
       await login(username, password, captchaToken);
     } catch {
-      // Error handled by AuthContext (shows toast/error message)
+      // el error lo muestra AuthContext
     }
   };
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-card-foreground">Iniciar Sesión</h2>
         <ThemeToggle />
@@ -104,7 +43,6 @@ const LoginForm = () => {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email / Username */}
         <div className="space-y-2">
           <Label htmlFor="username" className="text-sm font-medium text-card-foreground">Usuario o Email</Label>
           <Input
@@ -120,7 +58,6 @@ const LoginForm = () => {
           />
         </div>
 
-        {/* Password */}
         <div className="space-y-2">
           <Label htmlFor="password" className="text-sm font-medium text-card-foreground">Contraseña</Label>
           <Input
@@ -142,17 +79,15 @@ const LoginForm = () => {
           </div>
         )}
 
-        {/* reCAPTCHA v2 widget */}
-        {RECAPTCHA_SITE_KEY && (
-          <div className="flex justify-center">
+        {siteKey && (
+          <div className="flex justify-center min-h-[78px]">
             <div ref={captchaRef} />
           </div>
         )}
 
-        {/* Login button */}
         <Button
           type="submit"
-          disabled={loading}
+          disabled={loading || (siteKey && !captchaToken)}
           className="w-full h-9 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-medium transition-colors"
         >
           {loading ? 'Ingresando...' : 'Ingresar'}

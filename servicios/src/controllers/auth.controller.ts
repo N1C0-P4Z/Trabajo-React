@@ -7,10 +7,9 @@ export const authController = {
     try {
       const data = req.body;
 
-      // CON-5: Backend consent validation — Art. 5 Ley 25.326
       if (!data.consent) {
         return res.status(400).json({
-          error: 'Consentimiento requerido. Debe aceptar la política de privacidad.'
+          error: 'Tenés que aceptar la política de privacidad para registrarte.',
         });
       }
 

@@ -12,12 +12,11 @@ import { BODY_SIZE_LIMIT } from './config/security';
 
 const app = express();
 
-// Security headers (Helmet) — CORP relaxed for cross-origin static assets (avatars)
+// Headers de seguridad; CORP abierto para servir avatars cross-origin
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
-// Disable x-powered-by
 app.disable('x-powered-by');
 
 // CORS — permite cookies cross-origin para desarrollo local
@@ -29,14 +28,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Body parser with size limit
 app.use(express.json({ limit: BODY_SIZE_LIMIT }));
 app.use(cookieParser());
 
-// Static file serving for uploaded avatars
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
@@ -52,7 +48,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
   // Payload Too Large (express.json limit)
   if (err.type === 'entity.too.large') {
-    res.status(413).json({ error: 'Payload too large. Maximum body size is 1MB.' });
+    res.status(413).json({ error: 'Payload demasiado grande. Máximo 1MB.' });
     return;
   }
 
