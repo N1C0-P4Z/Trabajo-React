@@ -12,7 +12,14 @@ const LoginForm = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
-  const { siteKey, token: captchaToken, captchaRef } = useRecaptcha();
+  const {
+    siteKey,
+    required,
+    loading: captchaLoading,
+    token: captchaToken,
+    canSubmit,
+    captchaRef,
+  } = useRecaptcha();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +28,7 @@ const LoginForm = () => {
       return;
     }
 
-    if (siteKey && !captchaToken) {
+    if (!canSubmit) {
       return;
     }
 
@@ -79,18 +86,27 @@ const LoginForm = () => {
           </div>
         )}
 
-        {siteKey && (
-          <div className="flex justify-center min-h-[78px]">
-            <div ref={captchaRef} />
+        {(required || siteKey) && (
+          <div className="flex flex-col items-center gap-2 min-h-[78px]">
+            {captchaLoading ? (
+              <p className="text-xs text-muted-foreground">Cargando captcha…</p>
+            ) : (
+              <div ref={captchaRef} />
+            )}
+            {!captchaLoading && required && !siteKey && (
+              <p className="text-xs text-destructive text-center">
+                Captcha mal configurado en el servidor (falta RECAPTCHA_SITE_KEY).
+              </p>
+            )}
           </div>
         )}
 
         <Button
           type="submit"
-          disabled={loading || (siteKey && !captchaToken)}
+          disabled={loading || !canSubmit}
           className="w-full h-9 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-medium transition-colors"
         >
-          {loading ? 'Ingresando...' : 'Ingresar'}
+          {loading ? 'Ingresando...' : captchaLoading ? 'Esperando captcha…' : 'Ingresar'}
         </Button>
 
         <div className="text-center space-y-2 pt-2">
