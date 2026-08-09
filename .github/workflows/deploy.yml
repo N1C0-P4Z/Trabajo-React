@@ -106,6 +106,8 @@ jobs:
           script: |
             set -e
             cd ~/servicios
+            npm uninstall sharp --no-save || true
+            rm -rf node_modules/sharp
             npm install --production
             npx prisma generate
             npx prisma migrate deploy

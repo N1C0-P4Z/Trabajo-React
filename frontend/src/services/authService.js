@@ -9,6 +9,20 @@ export class FieldError extends Error {
   }
 }
 
+async function readJson(response) {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(
+      response.status >= 500
+        ? 'El servidor no está disponible. Probá de nuevo más tarde.'
+        : 'Respuesta inválida del servidor'
+    );
+  }
+}
+
 export const authService = {
   async register(userData) {
     const response = await fetch(`${API_URL}/auth/register`, {
@@ -20,14 +34,14 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const data = await response.json();
+      const data = await readJson(response);
       throw new FieldError(
         data.error || 'Error al registrarse',
         data.field || null
       );
     }
 
-    return response.json();
+    return readJson(response);
   },
 
   async login(username, password, captchaToken) {
@@ -36,16 +50,16 @@ export const authService = {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Important: include cookies
+      credentials: 'include',
       body: JSON.stringify({ username, password, captchaToken }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await readJson(response);
       throw new Error(error.error || 'Login failed');
     }
 
-    return response.json();
+    return readJson(response);
   },
 
   async logout() {
@@ -55,11 +69,11 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await readJson(response);
       throw new Error(error.error || 'Logout failed');
     }
 
-    return response.json();
+    return readJson(response);
   },
 
   async getCurrentUser() {
@@ -75,7 +89,7 @@ export const authService = {
       throw new Error('Failed to get user');
     }
 
-    return response.json();
+    return readJson(response);
   },
 
   async uploadPhoto(file) {
@@ -89,11 +103,11 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await readJson(response);
       throw new Error(error.error || 'Error al subir foto');
     }
 
-    return response.json();
+    return readJson(response);
   },
 
   isAuthenticated(user) {
