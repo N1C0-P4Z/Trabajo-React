@@ -1,9 +1,3 @@
-/**
- * @fileoverview Formulario de registro público para pacientes.
- * Recolecta datos personales, datos médicos (obra social, alergias, etc.)
- * y credenciales de acceso. Al registrarse redirige al login.
- */
-
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button"
@@ -18,7 +12,9 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ThemeToggle from './ThemeToggle';
+import PrivacyPolicy from './PrivacyPolicy';
 import { authService, FieldError } from '../services/authService';
+import { useRecaptcha } from '../hooks/useRecaptcha';
 
 const OBRA_SOCIAL_OPTIONS = [
   'Ninguna',
@@ -29,6 +25,55 @@ const OBRA_SOCIAL_OPTIONS = [
   'Prevención Salud',
   'Otra',
 ];
+
+const validatePasswordComplexity = (value) => {
+  if (!value) return 'Completá tu contraseña';
+  if (value.length < 8) return 'Mínimo 8 caracteres';
+  if (!/[A-Z]/.test(value)) return 'Debe tener al menos una mayúscula';
+  if (!/[a-z]/.test(value)) return 'Debe tener al menos una minúscula';
+  if (!/[0-9]/.test(value)) return 'Debe tener al menos un número';
+  return null;
+};
+
+const PasswordStrength = ({ password }) => {
+  if (!password) return null;
+
+  const checks = [
+    { label: '8+ caracteres', pass: password.length >= 8 },
+    { label: 'Una mayúscula', pass: /[A-Z]/.test(password) },
+    { label: 'Una minúscula', pass: /[a-z]/.test(password) },
+    { label: 'Un número', pass: /[0-9]/.test(password) },
+  ];
+
+  const passed = checks.filter((c) => c.pass).length;
+
+  return (
+    <div className="space-y-1 mt-1">
+      <div className="flex gap-1">
+        {checks.map((c, i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full ${
+              c.pass ? 'bg-green-500' : 'bg-border'
+            }`}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+        {checks.map((c, i) => (
+          <span
+            key={i}
+            className={`text-[10px] ${
+              c.pass ? 'text-green-600' : 'text-muted-foreground'
+            }`}
+          >
+            {c.pass ? '✓' : '○'} {c.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const moveCursorToEnd = (e) => {
   const input = e.target;
@@ -90,6 +135,8 @@ const RegisterForm = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const { siteKey, token: captchaToken, captchaRef } = useRecaptcha();
 
   const validateField = (name, value) => {
     switch (name) {
@@ -122,9 +169,7 @@ const RegisterForm = () => {
         if (value.trim() && !/^\+?54\s?(?:9\s?)?\d{2,4}\s?\d{4}[\s-]?\d{4}$/.test(value.trim())) return 'Formato inválido. Ej: +54 9 11 1234-5678';
         break;
       case 'password':
-        if (!value) return 'Completá tu contraseña';
-        if (value.length < 6) return 'Mínimo 6 caracteres';
-        break;
+        return validatePasswordComplexity(value);
       case 'confirmPassword':
         if (!value) return 'Repetí tu contraseña';
         if (value !== formData.password) return 'Las contraseñas no coinciden';
@@ -175,6 +220,14 @@ const RegisterForm = () => {
       if (error) newErrors[key] = error;
     });
 
+    if (!consent) {
+      newErrors.consent = 'Debés aceptar la política de privacidad para registrarte';
+    }
+
+    if (siteKey && !captchaToken) {
+      newErrors.captcha = 'Completá el captcha para continuar';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -197,7 +250,9 @@ const RegisterForm = () => {
         telefono_emergencia: formData.telefono_emergencia.trim() || undefined,
         alergias: formData.alergias.trim() || undefined,
         notas: formData.notas.trim() || undefined,
-        password: formData.password
+        password: formData.password,
+        captchaToken: captchaToken || undefined,
+        consent: true,
       });
 
       toast.success('Cuenta creada exitosamente', {
@@ -489,6 +544,7 @@ const RegisterForm = () => {
               className="h-9 bg-input border-border text-foreground rounded-xl focus-visible:ring-ring focus-visible:ring-1"
             />
             <FieldMessage message={errors.password} />
+            <PasswordStrength password={formData.password} />
           </div>
 
           {/* Repetir contraseña */}
@@ -518,6 +574,51 @@ const RegisterForm = () => {
             {errors.submit}
           </div>
         )}
+
+        <SectionDivider label="Privacidad" />
+
+        {siteKey && (
+          <div className="space-y-2">
+            <div className="flex justify-center min-h-[78px]">
+              <div ref={captchaRef} />
+            </div>
+            <FieldMessage message={errors.captcha} />
+          </div>
+        )}
+
+        <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground leading-relaxed">
+          <p>
+            Tus datos se usan solo para la atención odontológica. No se ceden a
+            terceros salvo obligación legal. Podés pedir acceso o baja de tus datos
+            ante la clínica.{' '}
+            <PrivacyPolicy />
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => {
+                setConsent(e.target.checked);
+                if (e.target.checked) {
+                  setErrors(prev => {
+                    const next = { ...prev };
+                    delete next.consent;
+                    return next;
+                  });
+                }
+              }}
+              disabled={loading}
+              className="mt-0.5 size-4 rounded border-border accent-primary"
+            />
+            <span className="text-sm text-card-foreground">
+              Acepto la política de privacidad
+            </span>
+          </label>
+          <FieldMessage message={errors.consent} />
+        </div>
 
         {/* Register button */}
         <Button
