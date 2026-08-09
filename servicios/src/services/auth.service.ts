@@ -24,8 +24,8 @@ export const authService = {
       throw new Error('Invalid credentials');
     }
 
-    // En producción no deja entrar sin email verificado
-    if (process.env.NODE_ENV === 'production') {
+    // Solo si hay verificación de email real habilitada (no hay SMTP todavía)
+    if (process.env.ENABLE_EMAIL_VERIFICATION === 'true') {
       const verified = await isEmailVerified(user.id);
       if (!verified) {
         throw new Error('Email no verificado. Revisá tu bandeja de entrada.');
