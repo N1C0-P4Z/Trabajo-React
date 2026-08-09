@@ -13,7 +13,7 @@ export const verifyCaptcha = async (req: Request, res: Response, next: NextFunct
   const token = req.body.captchaToken || req.body.recaptchaToken;
 
   if (!token) {
-    res.status(400).json({ error: 'Falló la verificación de reCAPTCHA' });
+    res.status(400).json({ error: 'Completá el captcha para continuar' });
     return;
   }
 
@@ -21,6 +21,9 @@ export const verifyCaptcha = async (req: Request, res: Response, next: NextFunct
     const params = new URLSearchParams();
     params.append('secret', RECAPTCHA_SECRET);
     params.append('response', token);
+    if (req.ip) {
+      params.append('remoteip', req.ip);
+    }
 
     const response = await fetch(RECAPTCHA_VERIFY_URL, {
       method: 'POST',
@@ -30,12 +33,14 @@ export const verifyCaptcha = async (req: Request, res: Response, next: NextFunct
     const data = await response.json();
 
     if (!data.success) {
+      console.error('reCAPTCHA verify failed:', data['error-codes'] || data);
       res.status(400).json({ error: 'Falló la verificación de reCAPTCHA' });
       return;
     }
 
     next();
-  } catch {
+  } catch (err) {
+    console.error('reCAPTCHA verify error:', err);
     res.status(400).json({ error: 'Falló la verificación de reCAPTCHA' });
   }
 };

@@ -76,7 +76,7 @@ const StaffRegisterForm = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
-  const { siteKey, token: captchaToken, captchaRef } = useRecaptcha();
+  const { siteKey, required, loading: captchaLoading, token: captchaToken, canSubmit, captchaRef } = useRecaptcha();
 
   const validateField = (name, value) => {
     switch (name) {
@@ -157,8 +157,10 @@ const StaffRegisterForm = () => {
       newErrors.consent = 'Debés aceptar la política de privacidad para registrarte';
     }
 
-    if (siteKey && !captchaToken) {
-      newErrors.captcha = 'Completá el captcha para continuar';
+    if (!canSubmit) {
+      newErrors.captcha = captchaLoading
+        ? 'Esperá a que cargue el captcha'
+        : 'Completá el captcha para continuar';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -383,10 +385,14 @@ const StaffRegisterForm = () => {
 
         <SectionDivider label="Privacidad" />
 
-        {siteKey && (
+        {(required || siteKey) && (
           <div className="space-y-2">
             <div className="flex justify-center min-h-[78px]">
-              <div ref={captchaRef} />
+              {captchaLoading ? (
+                <p className="text-xs text-muted-foreground">Cargando captcha…</p>
+              ) : (
+                <div ref={captchaRef} />
+              )}
             </div>
             <FieldMessage message={errors.captcha} />
           </div>
