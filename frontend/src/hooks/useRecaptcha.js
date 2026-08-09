@@ -19,8 +19,9 @@ export function useRecaptcha() {
     const loadSiteKey = async () => {
       try {
         const res = await fetch(`${API_BASE}/v1/config`);
-        if (res.ok) {
-          const data = await res.json();
+        const text = await res.text();
+        if (res.ok && text) {
+          const data = JSON.parse(text);
           if (!cancelled && data.recaptchaSiteKey) {
             setSiteKey(data.recaptchaSiteKey);
             return;

@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
-import sharp from 'sharp';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_EXTENSIONS = ['.png', '.jpeg', '.jpg'];
@@ -50,14 +49,14 @@ const upload = multer({
   },
 });
 
-function validateMagicBytes(buffer: Buffer): boolean {
+function detectImageExt(buffer: Buffer): '.png' | '.jpg' | null {
   if (buffer.length >= 4 && buffer.subarray(0, 4).equals(MAGIC_BYTES.png)) {
-    return true;
+    return '.png';
   }
   if (buffer.length >= 3 && buffer.subarray(0, 3).equals(MAGIC_BYTES.jpeg)) {
-    return true;
+    return '.jpg';
   }
-  return false;
+  return null;
 }
 
 async function cleanupTemp(filePath: string | undefined): Promise<void> {
@@ -70,8 +69,8 @@ async function cleanupTemp(filePath: string | undefined): Promise<void> {
 }
 
 /**
- * Subida de foto: tamaño máx 2MB, extensión/mime, magic bytes y normalización con Sharp.
- * Deja el resultado en req.processedPhoto.
+ * Subida de foto: máx 2MB, mime/extensión y magic bytes.
+ * Sin sharp (evita binarios nativos que fallan en el server de la facultad).
  */
 export function handlePhotoUpload(req: Request, res: Response, next: NextFunction): void {
   const multerSingle = upload.single('photo');
@@ -115,22 +114,18 @@ export function handlePhotoUpload(req: Request, res: Response, next: NextFunctio
       }
 
       const fileBuffer = await fs.readFile(tempPath);
-      if (!validateMagicBytes(fileBuffer)) {
+      const ext = detectImageExt(fileBuffer);
+      if (!ext) {
         await cleanupTemp(tempPath);
         res.status(400).json({ error: 'El contenido del archivo no es un PNG o JPEG válido.' });
         return;
       }
 
       await ensureDirectories();
-      const filename = `avatar-${(req as any).user.userId}-${Date.now()}.webp`;
+      const filename = `avatar-${(req as any).user.userId}-${Date.now()}${ext}`;
       const finalPath = path.join(UPLOAD_FINAL_DIR, filename);
 
-      await sharp(tempPath)
-        .resize(300, 300, { fit: 'cover' })
-        .webp({ quality: 85 })
-        .toFile(finalPath);
-
-      await cleanupTemp(tempPath);
+      await fs.rename(tempPath, finalPath);
 
       (req as any).processedPhoto = {
         path: finalPath,
@@ -142,7 +137,7 @@ export function handlePhotoUpload(req: Request, res: Response, next: NextFunctio
     } catch (processingError) {
       await cleanupTemp(tempPath);
       console.error('Error al procesar imagen:', processingError);
-      res.status(400).json({ error: 'No se pudo procesar la imagen. El archivo puede estar dañado.' });
+      res.status(400).json({ error: 'No se pudo guardar la imagen.' });
     }
   });
 }
