@@ -21,7 +21,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
-import { Plus, Pencil, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Search, ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
 
 const ALL = '__ALL__';
 const LIMITE = 10;
@@ -74,6 +74,7 @@ const PaymentsPage = () => {
 
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const loadPayments = useCallback(async (filters = {}, page = 1) => {
     try {
@@ -171,6 +172,25 @@ const PaymentsPage = () => {
     toast.success(editingPayment ? 'Pago actualizado' : 'Pago registrado');
     setEditingPayment(null);
     goToPage(pagina);
+  };
+
+  const handleDownloadReceipt = async (payment) => {
+    try {
+      setDownloadingId(payment.id);
+      const blob = await paymentService.downloadPdf(payment.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprobante-${payment.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(err.message || 'No se pudo descargar el comprobante');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const totalPages = Math.max(1, Math.ceil(total / LIMITE));
@@ -321,16 +341,29 @@ const PaymentsPage = () => {
                     {payment.notes || '—'}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingPayment(payment);
-                        setFormModalOpen(true);
-                      }}
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {(payment.status === 'COMPLETADO' || payment.status === 'ANULADO') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Descargar comprobante"
+                          disabled={downloadingId === payment.id}
+                          onClick={() => handleDownloadReceipt(payment)}
+                        >
+                          <FileDown className="size-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingPayment(payment);
+                          setFormModalOpen(true);
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
