@@ -21,6 +21,8 @@ model User {
   is_active            Boolean         @default(true)
   emailVerified        Boolean         @default(false)
   avatar_url           String?
+  dni                  String?         @unique
+  direccion            String?
   created_at           DateTime        @default(now())
   patient              Patient?
   patient_appointments Appointment[]   @relation("PatientAppointments")
