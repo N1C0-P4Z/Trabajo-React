@@ -10,6 +10,8 @@ import AdminPage from './pages/AdminPage';
 import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
+import SecretariesPage from './pages/SecretariesPage';
+import SecretaryProfilePage from './pages/SecretaryProfilePage';
 import PatientsPage from './pages/PatientsPage';
 import PatientProfilePage from './pages/PatientProfilePage';
 import ProfilePage from './pages/ProfilePage';
@@ -89,6 +91,16 @@ function App() {
             </RoleProtectedRoute>
           } 
         />
+        <Route path="/secretaries" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <SecretariesPage />
+          </RoleProtectedRoute>
+        } />
+        <Route path="/secretaries/:id" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <SecretaryProfilePage />
+          </RoleProtectedRoute>
+        } />
         <Route path="/patients" element={
           <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'DENTIST']}>
             <PatientsPage />
