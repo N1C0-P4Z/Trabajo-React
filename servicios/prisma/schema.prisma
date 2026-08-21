@@ -88,16 +88,19 @@ model Appointment {
 }
 
 model Payment {
-  id              Int          @id @default(autoincrement())
-  patient_id      Int
-  appointment_id  Int?
-  amount          Float
-  payment_method  String
-  status          String       @default("COMPLETADO")
-  notes           String?
-  paid_at         DateTime     @default(now())
-  created_by      Int?
-  created_at      DateTime     @default(now())
+  id                       Int          @id @default(autoincrement())
+  patient_id               Int
+  appointment_id           Int?
+  amount                   Float
+  payment_method           String
+  status                   String       @default("COMPLETADO")
+  notes                    String?
+  paid_at                  DateTime     @default(now())
+  created_by               Int?
+  created_at               DateTime     @default(now())
+  receipt_number           Int?         @unique
+  receipt_token_hash       String?
+  receipt_token_expires_at DateTime?
 
   patient         User         @relation("PatientPayments", fields: [patient_id], references: [id])
   appointment     Appointment? @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
