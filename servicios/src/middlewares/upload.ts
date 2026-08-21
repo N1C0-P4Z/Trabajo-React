@@ -13,7 +13,18 @@ const MAGIC_BYTES = {
 };
 
 const UPLOAD_TEMP_DIR = path.join(__dirname, '../../uploads/temp');
-const UPLOAD_FINAL_DIR = path.join(__dirname, '../../uploads/avatars');
+export const UPLOAD_FINAL_DIR = path.join(__dirname, '../../uploads/avatars');
+
+export function isSafeAvatarPath(resolvedPath: string): boolean {
+  const normalized = path.resolve(resolvedPath);
+  const avatarsDir = path.resolve(UPLOAD_FINAL_DIR);
+
+  if (normalized.includes('..')) {
+    return false;
+  }
+
+  return normalized === avatarsDir || normalized.startsWith(`${avatarsDir}${path.sep}`);
+}
 
 async function ensureDirectories(): Promise<void> {
   await fs.mkdir(UPLOAD_TEMP_DIR, { recursive: true });

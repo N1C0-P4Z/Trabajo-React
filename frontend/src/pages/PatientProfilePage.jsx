@@ -1,11 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import patientService from '../services/patientService';
+import userService from '../services/userService';
 import appointmentService from '../services/appointmentService';
 import { useAuth } from '../hooks/useAuth';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import DentistPhotoUpload from '../components/DentistPhotoUpload';
+import { fetchAvatarObjectUrl, revokeAvatarObjectUrl } from '../services/avatarService';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
+import { Loader2, Lock, ChevronDown, ChevronUp } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,6 +32,16 @@ import {
 } from '@/components/ui/breadcrumb';
 
 // --- Helpers ---
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateNewPassword(password) {
+  if (password.length < 8) return 'Mínimo 8 caracteres';
+  if (!/[A-Z]/.test(password)) return 'Debe incluir al menos una mayúscula';
+  if (!/[a-z]/.test(password)) return 'Debe incluir al menos una minúscula';
+  if (!/[0-9]/.test(password)) return 'Debe incluir al menos un número';
+  return null;
+}
 
 function getInitials(firstName, lastName) {
   const first = firstName?.charAt(0)?.toUpperCase() || '';
@@ -80,7 +106,7 @@ function getStatusVariant(status) {
 const PatientProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [patient, setPatient] = useState(null);
   const [appointments, setAppointments] = useState([]);
@@ -88,6 +114,26 @@ const PatientProfilePage = () => {
   const [error, setError] = useState(null);
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   const [appointmentsError, setAppointmentsError] = useState(null);
+  const [avatarObjectUrl, setAvatarObjectUrl] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    dni: '',
+    direccion: '',
+    obra_social: '',
+    numero_afiliado: '',
+    contacto_emergencia: '',
+    telefono_emergencia: '',
+    alergias: '',
+    current_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
 
   // --- Data fetching ---
 
@@ -135,6 +181,178 @@ const PatientProfilePage = () => {
       loadAppointments(patient.user_id);
     }
   }, [patient?.user_id, loadAppointments]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let loadedUrl = null;
+
+    async function loadAvatar() {
+      const patientUser = patient?.user;
+      const ownProfile = user?.id === patient?.user_id;
+
+      if (ownProfile || !patientUser?.id || !patientUser?.avatar_url) {
+        setAvatarObjectUrl((prev) => {
+          revokeAvatarObjectUrl(prev);
+          return null;
+        });
+        return;
+      }
+
+      const objectUrl = await fetchAvatarObjectUrl(patientUser.id);
+      if (cancelled) {
+        revokeAvatarObjectUrl(objectUrl);
+        return;
+      }
+
+      loadedUrl = objectUrl;
+      setAvatarObjectUrl((prev) => {
+        revokeAvatarObjectUrl(prev);
+        return objectUrl;
+      });
+    }
+
+    if (patient?.user) {
+      loadAvatar();
+    }
+
+    return () => {
+      cancelled = true;
+      revokeAvatarObjectUrl(loadedUrl);
+    };
+  }, [patient?.user?.id, patient?.user?.avatar_url, patient?.user_id, user?.id]);
+
+  useEffect(() => {
+    if (patient && user?.id === patient.user_id) {
+      setForm((prev) => ({
+        ...prev,
+        first_name: patient.user?.first_name || '',
+        last_name: patient.user?.last_name || '',
+        email: patient.user?.email || '',
+        phone: patient.user?.phone || '',
+        dni: patient.dni || '',
+        direccion: patient.direccion || '',
+        obra_social: patient.obra_social || '',
+        numero_afiliado: patient.numero_afiliado || '',
+        contacto_emergencia: patient.contacto_emergencia || '',
+        telefono_emergencia: patient.telefono_emergencia || '',
+        alergias: patient.alergias || '',
+      }));
+    }
+  }, [patient, user?.id]);
+
+  const handlePhotoUploadSuccess = async () => {
+    await refreshUser();
+    await loadPatient();
+  };
+
+  const isOwnProfile = user?.id === patient?.user_id;
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (formErrors[name]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+  };
+
+  const validateOwnProfileForm = () => {
+    const errs = {};
+
+    if (!form.first_name.trim() || form.first_name.trim().length < 2) {
+      errs.first_name = 'Mínimo 2 caracteres';
+    }
+    if (!form.last_name.trim() || form.last_name.trim().length < 2) {
+      errs.last_name = 'Mínimo 2 caracteres';
+    }
+    if (!form.email.trim()) {
+      errs.email = 'Completá tu correo electrónico';
+    } else if (!emailRegex.test(form.email.trim())) {
+      errs.email = 'Formato de email inválido';
+    }
+    if (!form.phone.trim()) {
+      errs.phone = 'Completá tu teléfono';
+    } else if (!form.phone.trim().startsWith('+54')) {
+      errs.phone = 'Formato argentino: +54 ...';
+    }
+    if (!form.dni.trim()) {
+      errs.dni = 'Completá tu DNI';
+    }
+
+    if (passwordOpen || form.new_password || form.current_password || form.confirm_password) {
+      if (form.new_password) {
+        if (!form.current_password) {
+          errs.current_password = 'Ingresá tu contraseña actual';
+        }
+        const passwordError = validateNewPassword(form.new_password);
+        if (passwordError) {
+          errs.new_password = passwordError;
+        }
+        if (form.new_password !== form.confirm_password) {
+          errs.confirm_password = 'Las contraseñas no coinciden';
+        }
+      } else if (form.current_password) {
+        errs.new_password = 'Ingresá la nueva contraseña';
+      }
+    }
+
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSaveOwnProfile = async (e) => {
+    e.preventDefault();
+    if (!validateOwnProfileForm()) return;
+
+    setSaving(true);
+    try {
+      const userData = {
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+      };
+
+      if (form.new_password) {
+        userData.current_password = form.current_password;
+        userData.new_password = form.new_password;
+      }
+
+      await userService.updateUser(user.id, userData);
+
+      await patientService.update(patient.id, {
+        dni: form.dni.trim(),
+        direccion: form.direccion.trim() || null,
+        obra_social: form.obra_social.trim() || null,
+        numero_afiliado: form.numero_afiliado.trim() || null,
+        contacto_emergencia: form.contacto_emergencia.trim() || null,
+        telefono_emergencia: form.telefono_emergencia.trim() || null,
+        alergias: form.alergias.trim() || null,
+      });
+
+      await refreshUser();
+      await loadPatient();
+
+      setForm((prev) => ({
+        ...prev,
+        current_password: '',
+        new_password: '',
+        confirm_password: '',
+      }));
+      setPasswordOpen(false);
+
+      toast.success('Perfil actualizado', {
+        description: 'Tus datos se guardaron correctamente.',
+      });
+    } catch (err) {
+      toast.error('Error', { description: err.message || 'Error al guardar los cambios' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // --- Self-scoping guard ---
 
@@ -243,11 +461,24 @@ const PatientProfilePage = () => {
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex flex-col sm:flex-row items-start gap-6">
           {/* Avatar */}
-          <Avatar size="lg" className="size-20 text-lg">
-            <AvatarFallback className="text-xl">
-              {getInitials(firstName, lastName)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex flex-col items-center gap-4">
+            {isOwnProfile ? (
+              <DentistPhotoUpload
+                user={patient.user}
+                onUploadSuccess={handlePhotoUploadSuccess}
+                size="md"
+              />
+            ) : (
+              <Avatar size="lg" className="size-20 text-lg">
+                {avatarObjectUrl ? (
+                  <AvatarImage src={avatarObjectUrl} alt={`${firstName} ${lastName}`} />
+                ) : null}
+                <AvatarFallback className="text-xl">
+                  {getInitials(firstName, lastName)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
 
           {/* Name & DNI */}
           <div className="flex-1 min-w-0">
@@ -286,7 +517,160 @@ const PatientProfilePage = () => {
         </div>
       </div>
 
-      {/* Information Grid */}
+      {/* Information / Edit */}
+      {isOwnProfile ? (
+        <form onSubmit={handleSaveOwnProfile} className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mis datos</CardTitle>
+              <CardDescription>Actualizá tu información personal</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="first_name">Nombre</Label>
+                  <Input id="first_name" name="first_name" value={form.first_name} onChange={handleFormChange} />
+                  {formErrors.first_name && <p className="text-sm text-destructive">{formErrors.first_name}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name">Apellido</Label>
+                  <Input id="last_name" name="last_name" value={form.last_name} onChange={handleFormChange} />
+                  {formErrors.last_name && <p className="text-sm text-destructive">{formErrors.last_name}</p>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={form.email} onChange={handleFormChange} />
+                {formErrors.email && <p className="text-sm text-destructive">{formErrors.email}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Teléfono</Label>
+                <Input id="phone" name="phone" type="tel" value={form.phone} onChange={handleFormChange} />
+                {formErrors.phone && <p className="text-sm text-destructive">{formErrors.phone}</p>}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dni">DNI</Label>
+                  <Input id="dni" name="dni" value={form.dni} onChange={handleFormChange} />
+                  {formErrors.dni && <p className="text-sm text-destructive">{formErrors.dni}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="direccion">Dirección</Label>
+                  <Input id="direccion" name="direccion" value={form.direccion} onChange={handleFormChange} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="obra_social">Obra Social</Label>
+                  <Input id="obra_social" name="obra_social" value={form.obra_social} onChange={handleFormChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numero_afiliado">N° Afiliado</Label>
+                  <Input id="numero_afiliado" name="numero_afiliado" value={form.numero_afiliado} onChange={handleFormChange} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contacto_emergencia">Contacto Emergencia</Label>
+                  <Input id="contacto_emergencia" name="contacto_emergencia" value={form.contacto_emergencia} onChange={handleFormChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefono_emergencia">Tel. Emergencia</Label>
+                  <Input id="telefono_emergencia" name="telefono_emergencia" value={form.telefono_emergencia} onChange={handleFormChange} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="alergias">Alergias</Label>
+                <Input id="alergias" name="alergias" value={form.alergias} onChange={handleFormChange} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader
+              className="cursor-pointer select-none"
+              onClick={() => setPasswordOpen(!passwordOpen)}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="size-5" />
+                    Cambiar contraseña
+                  </CardTitle>
+                  <CardDescription>
+                    {passwordOpen
+                      ? 'Ingresá tu contraseña actual y la nueva'
+                      : 'Hacé clic para cambiar tu contraseña'}
+                  </CardDescription>
+                </div>
+                {passwordOpen ? (
+                  <ChevronUp className="size-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="size-5 text-muted-foreground" />
+                )}
+              </div>
+            </CardHeader>
+            {passwordOpen && (
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="current_password">Contraseña actual</Label>
+                  <Input
+                    id="current_password"
+                    name="current_password"
+                    type="password"
+                    value={form.current_password}
+                    onChange={handleFormChange}
+                  />
+                  {formErrors.current_password && (
+                    <p className="text-sm text-destructive">{formErrors.current_password}</p>
+                  )}
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label htmlFor="new_password">Nueva contraseña</Label>
+                  <Input
+                    id="new_password"
+                    name="new_password"
+                    type="password"
+                    value={form.new_password}
+                    onChange={handleFormChange}
+                    placeholder="Mínimo 8 caracteres, mayúscula, minúscula y número"
+                  />
+                  {formErrors.new_password && (
+                    <p className="text-sm text-destructive">{formErrors.new_password}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
+                  <Input
+                    id="confirm_password"
+                    name="confirm_password"
+                    type="password"
+                    value={form.confirm_password}
+                    onChange={handleFormChange}
+                  />
+                  {formErrors.confirm_password && (
+                    <p className="text-sm text-destructive">{formErrors.confirm_password}</p>
+                  )}
+                </div>
+              </CardContent>
+            )}
+          </Card>
+
+          <CardFooter className="px-0">
+            <Button type="submit" disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                'Guardar cambios'
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      ) : (
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-sm font-semibold text-foreground mb-4">Información</h2>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
@@ -301,6 +685,10 @@ const PatientProfilePage = () => {
           <div>
             <dt className="text-xs text-muted-foreground">DNI</dt>
             <dd className="text-sm text-foreground mt-0.5">{patient.dni || '—'}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Dirección</dt>
+            <dd className="text-sm text-foreground mt-0.5">{patient.direccion || '—'}</dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">Obra Social</dt>
@@ -340,6 +728,7 @@ const PatientProfilePage = () => {
           </div>
         </dl>
       </div>
+      )}
 
       {/* Appointment History Section */}
       <div className="bg-card border border-border rounded-xl p-6">

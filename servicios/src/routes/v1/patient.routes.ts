@@ -13,8 +13,8 @@ router.use(authenticateToken);
 router.get('/', audit({ action: 'READ', resource: 'patient' }), patientController.list);
 router.get('/:id', audit({ action: 'READ', resource: 'patient', resourceIdParam: 'id' }), patientController.getById);
 
-// Escritura: SUPER_ADMIN, OWNER y SECRETARY pueden crear/editar pacientes
-router.put('/:id', requireRole('SUPER_ADMIN', 'OWNER', 'SECRETARY'), audit({ action: 'UPDATE', resource: 'patient', resourceIdParam: 'id' }), patientController.update);
+// Escritura: staff o el propio paciente
+router.put('/:id', authenticateToken, audit({ action: 'UPDATE', resource: 'patient', resourceIdParam: 'id' }), patientController.update);
 // Delete: solo SUPER_ADMIN y OWNER
 router.delete('/:id', requireRole('SUPER_ADMIN', 'OWNER'), audit({ action: 'DELETE', resource: 'patient', resourceIdParam: 'id' }), patientController.delete);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import userService from '../services/userService';
+import { fetchAvatarObjectUrl, revokeAvatarObjectUrl } from '../services/avatarService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ const DoctorProfilePage = () => {
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [avatarObjectUrl, setAvatarObjectUrl] = useState(null);
 
   const loadDoctor = useCallback(async () => {
     try {
@@ -55,6 +57,42 @@ const DoctorProfilePage = () => {
   useEffect(() => {
     loadDoctor();
   }, [loadDoctor]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let loadedUrl = null;
+
+    async function loadAvatar() {
+      if (!doctor?.id || !doctor?.avatar_url) {
+        setAvatarObjectUrl((prev) => {
+          revokeAvatarObjectUrl(prev);
+          return null;
+        });
+        return;
+      }
+
+      const objectUrl = await fetchAvatarObjectUrl(doctor.id);
+      if (cancelled) {
+        revokeAvatarObjectUrl(objectUrl);
+        return;
+      }
+
+      loadedUrl = objectUrl;
+      setAvatarObjectUrl((prev) => {
+        revokeAvatarObjectUrl(prev);
+        return objectUrl;
+      });
+    }
+
+    if (doctor) {
+      loadAvatar();
+    }
+
+    return () => {
+      cancelled = true;
+      revokeAvatarObjectUrl(loadedUrl);
+    };
+  }, [doctor?.id, doctor?.avatar_url]);
 
   // Loading
   if (loading) {
@@ -112,7 +150,12 @@ const DoctorProfilePage = () => {
         <div className="flex flex-col sm:flex-row items-start gap-6">
           {/* Avatar */}
           <Avatar size="lg" className="size-20 text-lg">
-            <AvatarImage src={doctor.avatar_url} alt={`${doctor.first_name} ${doctor.last_name}`} />
+            {avatarObjectUrl ? (
+              <AvatarImage
+                src={avatarObjectUrl}
+                alt={`${doctor.first_name} ${doctor.last_name}`}
+              />
+            ) : null}
             <AvatarFallback className="text-xl">
               {getInitials(doctor.first_name, doctor.last_name)}
             </AvatarFallback>

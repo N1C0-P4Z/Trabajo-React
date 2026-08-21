@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fetchAvatarObjectUrl, revokeAvatarObjectUrl } from '../services/avatarService';
 
 function getInitials(firstName, lastName) {
   const first = firstName?.charAt(0)?.toUpperCase() || '';
@@ -16,6 +17,7 @@ const DoctorCard = ({ doctor, onToggleActive, onDelete, hideActions }) => {
   const navigate = useNavigate();
   const isActive = doctor.is_active !== false; // default true
   const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarObjectUrl, setAvatarObjectUrl] = useState(null);
   const menuRef = useRef(null);
 
   // Cerrar menú al hacer click fuera
@@ -29,6 +31,40 @@ const DoctorCard = ({ doctor, onToggleActive, onDelete, hideActions }) => {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [menuOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let loadedUrl = null;
+
+    async function loadAvatar() {
+      if (!doctor?.id || !doctor?.avatar_url) {
+        setAvatarObjectUrl((prev) => {
+          revokeAvatarObjectUrl(prev);
+          return null;
+        });
+        return;
+      }
+
+      const objectUrl = await fetchAvatarObjectUrl(doctor.id);
+      if (cancelled) {
+        revokeAvatarObjectUrl(objectUrl);
+        return;
+      }
+
+      loadedUrl = objectUrl;
+      setAvatarObjectUrl((prev) => {
+        revokeAvatarObjectUrl(prev);
+        return objectUrl;
+      });
+    }
+
+    loadAvatar();
+
+    return () => {
+      cancelled = true;
+      revokeAvatarObjectUrl(loadedUrl);
+    };
+  }, [doctor?.id, doctor?.avatar_url]);
 
   const handleAction = (action) => {
     setMenuOpen(false);
@@ -46,7 +82,12 @@ const DoctorCard = ({ doctor, onToggleActive, onDelete, hideActions }) => {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <Avatar size="lg">
-            <AvatarImage src={doctor.avatar_url} alt={`${doctor.first_name} ${doctor.last_name}`} />
+            {avatarObjectUrl ? (
+              <AvatarImage
+                src={avatarObjectUrl}
+                alt={`${doctor.first_name} ${doctor.last_name}`}
+              />
+            ) : null}
             <AvatarFallback>{getInitials(doctor.first_name, doctor.last_name)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">

@@ -13,6 +13,8 @@ const publicUserSelect = {
   license_number: true,
   is_active: true,
   avatar_url: true,
+  dni: true,
+  direccion: true,
   created_at: true
 };
 

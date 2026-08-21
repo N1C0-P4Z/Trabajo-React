@@ -13,6 +13,8 @@ export interface UserRecord {
   license_number: string | null;
   is_active: boolean;
   avatar_url: string | null;
+  dni: string | null;
+  direccion: string | null;
   created_at: Date;
 }
 
@@ -29,6 +31,8 @@ const publicSelect = {
   license_number: true,
   is_active: true,
   avatar_url: true,
+  dni: true,
+  direccion: true,
   created_at: true
 };
 
@@ -75,6 +79,17 @@ export const userRepository = {
     });
   },
 
+  async findByDni(dni: string, excludeUserId?: number) {
+    const where: any = { dni };
+    if (excludeUserId) {
+      where.NOT = { id: excludeUserId };
+    }
+    return await prisma.user.findFirst({
+      where,
+      select: publicSelect
+    });
+  },
+
   async create(data: any) {
     return await prisma.user.create({
       data,
@@ -96,9 +111,9 @@ export const userRepository = {
     });
   },
 
-  async countByRole(role: string): Promise<number> {
+  async countByRole(role: string, onlyActive = false): Promise<number> {
     return await prisma.user.count({
-      where: { role }
+      where: onlyActive ? { role, is_active: true } : { role }
     });
   }
 };
