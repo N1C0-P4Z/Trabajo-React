@@ -9,6 +9,7 @@ const publicUserSelect = {
   phone: true,
   role: true,
   is_active: true,
+  dni: true,
 };
 
 const paymentPublicSelect = {
@@ -22,6 +23,7 @@ const paymentPublicSelect = {
   paid_at: true,
   created_by: true,
   created_at: true,
+  receipt_number: true,
   patient: {
     select: publicUserSelect,
   },
@@ -34,6 +36,46 @@ const paymentPublicSelect = {
   },
   recorder: {
     select: publicUserSelect,
+  },
+};
+
+const receiptPaymentSelect = {
+  id: true,
+  patient_id: true,
+  appointment_id: true,
+  amount: true,
+  payment_method: true,
+  status: true,
+  paid_at: true,
+  receipt_number: true,
+  patient: {
+    select: {
+      id: true,
+      first_name: true,
+      last_name: true,
+      dni: true,
+      role: true,
+      patient: {
+        select: {
+          dni: true,
+          obra_social: true,
+        },
+      },
+    },
+  },
+  appointment: {
+    select: {
+      obra_social: true,
+      type: {
+        select: { name: true },
+      },
+      doctor: {
+        select: {
+          first_name: true,
+          last_name: true,
+        },
+      },
+    },
   },
 };
 
@@ -118,6 +160,13 @@ export const paymentRepository = {
     });
   },
 
+  async findByIdForReceipt(id: number) {
+    return await prisma.payment.findUnique({
+      where: { id },
+      select: receiptPaymentSelect,
+    });
+  },
+
   async create(data: {
     patient_id: number;
     appointment_id?: number | null;
@@ -127,6 +176,7 @@ export const paymentRepository = {
     notes?: string | null;
     paid_at?: Date;
     created_by?: number | null;
+    receipt_number?: number | null;
   }) {
     return await prisma.payment.create({
       data,
@@ -140,11 +190,42 @@ export const paymentRepository = {
     status?: string;
     notes?: string | null;
     paid_at?: Date;
+    appointment_id?: number | null;
+    receipt_number?: number | null;
   }) {
     return await prisma.payment.update({
       where: { id },
       data,
       select: paymentPublicSelect,
+    });
+  },
+
+  async assignReceiptNumber(paymentId: number): Promise<number> {
+    return await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.findUnique({
+        where: { id: paymentId },
+        select: { receipt_number: true },
+      });
+
+      if (!payment) {
+        throw new Error('Pago no encontrado');
+      }
+
+      if (payment.receipt_number != null) {
+        return payment.receipt_number;
+      }
+
+      const maxResult = await tx.payment.aggregate({
+        _max: { receipt_number: true },
+      });
+      const nextNumber = (maxResult._max.receipt_number ?? 0) + 1;
+
+      await tx.payment.update({
+        where: { id: paymentId },
+        data: { receipt_number: nextNumber },
+      });
+
+      return nextNumber;
     });
   },
 };

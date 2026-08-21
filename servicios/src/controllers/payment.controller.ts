@@ -69,4 +69,22 @@ export const paymentController = {
       next(error);
     }
   },
+
+  async getReceiptPdf(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const requestingUser = {
+        userId: (req as any).user.userId,
+        role: (req as any).user.role,
+      };
+
+      const { buffer, filename } = await paymentService.getReceiptPdf(id, requestingUser);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(buffer);
+    } catch (error) {
+      next(error);
+    }
+  },
 };

@@ -123,7 +123,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       err.message === 'No autorizado para gestionar tipos de turno' ||
       err.message === 'No autorizado para gestionar doctores' ||
       err.message === 'No autorizado para gestionar pacientes' ||
-      err.message === 'No autorizado para ver secretarias') {
+      err.message === 'No autorizado para ver secretarias' ||
+      err.message === 'No autorizado para gestionar pagos') {
     res.status(403).json({ error: err.message });
     return;
   }
@@ -132,7 +133,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       err.message === 'Tipo de turno no encontrado' ||
       err.message === 'Turno no encontrado' ||
       err.message === 'Paciente no encontrado' ||
-      err.message === 'Doctor no encontrado') {
+      err.message === 'Doctor no encontrado' ||
+      err.message === 'Pago no encontrado') {
     res.status(404).json({ error: err.message });
     return;
   }
