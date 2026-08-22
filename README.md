@@ -63,12 +63,12 @@ Login: **admin** / **secret123**
 ```bash
 # Compilar
 (cd servicios && npm run build)
-(cd frontend && VITE_BASE='/~dos/' npm run build)
+(cd frontend && VITE_BASE='/~nueve/' npm run build)
 
 # Subir
-scp -r frontend/dist/* dos@200.3.127.46:~/public_html/
-scp -r servicios/dist/* dos@200.3.127.46:~/servicios/dist/
-scp -r servicios/prisma/* dos@200.3.127.46:~/servicios/prisma/
+scp -r frontend/dist/* nueve@200.3.127.46:~/public_html/
+scp -r servicios/dist/* nueve@200.3.127.46:~/servicios/dist/
+scp -r servicios/prisma/* nueve@200.3.127.46:~/servicios/prisma/
 ```
 
 PM2 detecta cambios en `dist/` y reinicia automáticamente.

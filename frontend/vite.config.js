@@ -7,8 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // IMPORTANTE: Cambiar '/~dos/' por tu usuario antes de compilar para el servidor
-  // Ej: '/~uno/', '/~tres/', etc.
+  // En el server: VITE_BASE='/~nueve/'
   // Para desarrollo local dejar como '/' o usar VITE_BASE env var
   base: process.env.VITE_BASE || '/',
   plugins: [react()],
