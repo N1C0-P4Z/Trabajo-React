@@ -6,6 +6,21 @@ import { audit } from '../../middlewares/audit';
 
 const router = Router();
 
+router.get(
+  '/mine',
+  authenticateToken,
+  requireRole('PATIENT'),
+  audit({ action: 'READ', resource: 'payment' }),
+  paymentController.listMine
+);
+
+router.get(
+  '/:id/pdf',
+  authenticateToken,
+  audit({ action: 'READ', resource: 'payment', resourceIdParam: 'id' }),
+  paymentController.getReceiptPdf
+);
+
 router.use(authenticateToken);
 router.use(requireRole('SUPER_ADMIN', 'OWNER', 'SECRETARY'));
 

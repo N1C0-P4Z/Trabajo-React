@@ -19,6 +19,9 @@ export const userController = {
           res.status(403).json({ error: 'No autorizado para asignar especialidad o matrícula' });
           return;
         }
+      } else if (user.role === 'OWNER' && role === 'SUPER_ADMIN') {
+        res.status(403).json({ error: 'No autorizado para asignar el rol SUPER_ADMIN' });
+        return;
       }
 
       const newUser = await userService.register({
@@ -51,7 +54,10 @@ export const userController = {
   async getAllUsers(req: Request, res: Response, next: NextFunction) {
     try {
       const role = req.query.role as string | undefined;
-      const users = await userService.getAllUsers(role);
+      const requestingUser = (req as any).user
+        ? { userId: (req as any).user.userId, role: (req as any).user.role }
+        : null;
+      const users = await userService.getAllUsers(role, requestingUser);
       res.json(users);
     } catch (error) {
       next(error);
@@ -61,7 +67,10 @@ export const userController = {
   async getUserById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const user = await userService.getUserById(id);
+      const requestingUser = (req as any).user
+        ? { userId: (req as any).user.userId, role: (req as any).user.role }
+        : null;
+      const user = await userService.getUserById(id, requestingUser);
       res.json(user);
     } catch (error) {
       next(error);
@@ -115,6 +124,27 @@ export const userController = {
       const userId = (req as any).user.userId;
       const result = await userService.deleteUserAccount(userId);
       res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getAvatar(req: Request, res: Response, next: NextFunction) {
+    try {
+      const targetId = parseInt(req.params.id, 10);
+      if (!targetId || Number.isNaN(targetId)) {
+        res.status(400).json({ error: 'ID de usuario inválido' });
+        return;
+      }
+
+      const requester = {
+        userId: (req as any).user.userId,
+        role: (req as any).user.role,
+      };
+      const { filePath, contentType } = await userService.getAvatarForViewer(requester, targetId);
+
+      res.setHeader('Content-Type', contentType);
+      res.sendFile(filePath);
     } catch (error) {
       next(error);
     }

@@ -71,6 +71,19 @@ const paymentService = {
 
     return await response.json();
   },
+
+  async downloadPdf(id) {
+    const response = await fetch(`${PAYMENTS_URL}/${id}/pdf`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al descargar comprobante');
+    }
+
+    return await response.blob();
+  },
 };
 
 export default paymentService;

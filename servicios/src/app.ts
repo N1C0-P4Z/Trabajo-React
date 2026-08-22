@@ -3,7 +3,6 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import routes from './routes';
@@ -35,8 +34,6 @@ app.use(cors({
 
 app.use(express.json({ limit: BODY_SIZE_LIMIT }));
 app.use(cookieParser());
-
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -113,12 +110,21 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
   if (err.message === 'No autorizado para editar este usuario' ||
       err.message === 'No autorizado para eliminar usuarios' ||
+      err.message === 'No autorizado para modificar un SUPER_ADMIN' ||
+      err.message === 'No autorizado para asignar el rol SUPER_ADMIN' ||
+      err.message === 'No se puede eliminar a un SUPER_ADMIN' ||
+      err.message === 'No autorizado para cambiar el rol' ||
+      err.message === 'No autorizado para cambiar el estado' ||
+      err.message === 'No se puede desactivar al último SUPER_ADMIN del sistema' ||
+      err.message === 'No se puede cambiar el rol del último SUPER_ADMIN del sistema' ||
       err.message === 'No se puede eliminar al administrador del sistema' ||
       err.message === 'No se puede eliminar al último SUPER_ADMIN del sistema' ||
       err.message === 'No podés eliminar tu propia cuenta' ||
       err.message === 'No autorizado para gestionar tipos de turno' ||
       err.message === 'No autorizado para gestionar doctores' ||
-      err.message === 'No autorizado para gestionar pacientes') {
+      err.message === 'No autorizado para gestionar pacientes' ||
+      err.message === 'No autorizado para ver secretarias' ||
+      err.message === 'No autorizado para gestionar pagos') {
     res.status(403).json({ error: err.message });
     return;
   }
@@ -127,7 +133,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       err.message === 'Tipo de turno no encontrado' ||
       err.message === 'Turno no encontrado' ||
       err.message === 'Paciente no encontrado' ||
-      err.message === 'Doctor no encontrado') {
+      err.message === 'Doctor no encontrado' ||
+      err.message === 'Pago no encontrado') {
     res.status(404).json({ error: err.message });
     return;
   }

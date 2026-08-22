@@ -16,10 +16,33 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { User, Lock, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import DentistPhotoUpload from '../components/DentistPhotoUpload';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateNewPassword(password) {
+  if (password.length < 8) {
+    return 'Mínimo 8 caracteres';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Debe incluir al menos una mayúscula';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Debe incluir al menos una minúscula';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Debe incluir al menos un número';
+  }
+  return null;
+}
 
 const ProfilePage = () => {
   const { user, refreshUser } = useAuth();
@@ -28,6 +51,9 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [specialties, setSpecialties] = useState([]);
+
+  const isDentist = user?.role === 'DENTIST';
 
   // Form state
   const [form, setForm] = useState({
@@ -35,6 +61,10 @@ const ProfilePage = () => {
     last_name: '',
     email: '',
     phone: '',
+    dni: '',
+    direccion: '',
+    specialty: '',
+    license_number: '',
     current_password: '',
     new_password: '',
     confirm_password: '',
@@ -66,6 +96,17 @@ const ProfilePage = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (isDentist) {
+      userService
+        .getSpecialties()
+        .then(setSpecialties)
+        .catch(() => {
+          // specialties optional for display
+        });
+    }
+  }, [isDentist]);
+
   // Populate form when user loads
   useEffect(() => {
     if (user) {
@@ -75,6 +116,10 @@ const ProfilePage = () => {
         last_name: user.last_name || '',
         email: user.email || '',
         phone: user.phone || '',
+        dni: user.dni || '',
+        direccion: user.direccion || '',
+        specialty: user.specialty || '',
+        license_number: user.license_number || '',
       }));
     }
   }, [user]);
@@ -118,8 +163,9 @@ const ProfilePage = () => {
         if (!form.current_password) {
           errs.current_password = 'Ingresá tu contraseña actual';
         }
-        if (form.new_password.length < 6) {
-          errs.new_password = 'Mínimo 6 caracteres';
+        const passwordError = validateNewPassword(form.new_password);
+        if (passwordError) {
+          errs.new_password = passwordError;
         }
         if (form.new_password !== form.confirm_password) {
           errs.confirm_password = 'Las contraseñas no coinciden';
@@ -147,7 +193,14 @@ const ProfilePage = () => {
         last_name: form.last_name.trim(),
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim(),
+        dni: form.dni.trim() || null,
+        direccion: form.direccion.trim() || null,
       };
+
+      if (isDentist) {
+        data.specialty = form.specialty || null;
+        data.license_number = form.license_number.trim() || null;
+      }
 
       // Only send password fields if user is changing password
       if (form.new_password) {
@@ -219,8 +272,8 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* Dentist photo upload */}
-      {user?.role === 'DENTIST' && (
+      {/* Profile photo upload */}
+      {['SECRETARY', 'DENTIST', 'OWNER'].includes(user?.role) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -309,6 +362,85 @@ const ProfilePage = () => {
                 <p className="text-sm text-destructive">{errors.phone}</p>
               )}
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dni">DNI</Label>
+                <Input
+                  id="dni"
+                  name="dni"
+                  value={form.dni}
+                  onChange={handleChange}
+                  placeholder="12345678"
+                />
+                {errors.dni && (
+                  <p className="text-sm text-destructive">{errors.dni}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="direccion">Dirección</Label>
+                <Input
+                  id="direccion"
+                  name="direccion"
+                  value={form.direccion}
+                  onChange={handleChange}
+                  placeholder="Calle, número, ciudad"
+                />
+                {errors.direccion && (
+                  <p className="text-sm text-destructive">{errors.direccion}</p>
+                )}
+              </div>
+            </div>
+
+            {isDentist && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="specialty">Especialidad</Label>
+                  <Select
+                    value={form.specialty}
+                    onValueChange={(value) => {
+                      setForm((prev) => ({ ...prev, specialty: value }));
+                      if (errors.specialty) {
+                        setErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.specialty;
+                          return next;
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="specialty">
+                      <SelectValue placeholder="Seleccioná una especialidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {specialties.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.specialty && (
+                    <p className="text-sm text-destructive">{errors.specialty}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="license_number">Matrícula</Label>
+                  <Input
+                    id="license_number"
+                    name="license_number"
+                    value={form.license_number}
+                    onChange={handleChange}
+                    placeholder="N° de matrícula profesional"
+                  />
+                  {errors.license_number && (
+                    <p className="text-sm text-destructive">{errors.license_number}</p>
+                  )}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -365,7 +497,7 @@ const ProfilePage = () => {
                   type="password"
                   value={form.new_password}
                   onChange={handleChange}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres, mayúscula, minúscula y número"
                 />
                 {errors.new_password && (
                   <p className="text-sm text-destructive">{errors.new_password}</p>

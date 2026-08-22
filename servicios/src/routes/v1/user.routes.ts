@@ -10,7 +10,13 @@ const router = Router();
 router.get('/me/data', authenticateToken, userController.getMeData);
 router.delete('/me', authenticateToken, userController.deleteMe);
 
-router.post('/me/photo', authenticateToken, requireRole('DENTIST'), handlePhotoUpload, userController.uploadPhoto);
+router.post(
+  '/me/photo',
+  authenticateToken,
+  requireRole('PATIENT', 'SECRETARY', 'DENTIST', 'OWNER'),
+  handlePhotoUpload,
+  userController.uploadPhoto
+);
 
 // Mutating routes: only SUPER_ADMIN and OWNER can create/update/delete users
 router.post('/', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), userController.register);
@@ -19,6 +25,7 @@ router.delete('/:id', authenticateToken, requireRole('SUPER_ADMIN', 'OWNER'), us
 
 // Read routes: authentication required
 router.get('/', authenticateToken, userController.getAllUsers);
+router.get('/:id/avatar', authenticateToken, userController.getAvatar);
 router.get('/:id', authenticateToken, userController.getUserById);
 
 export default router;

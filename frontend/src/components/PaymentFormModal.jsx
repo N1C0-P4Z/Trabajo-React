@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import paymentService from '../services/paymentService';
+import appointmentService from '../services/appointmentService';
 import {
   Dialog,
   DialogContent,
@@ -58,6 +59,9 @@ const PaymentFormModal = ({
   const [status, setStatus] = useState('COMPLETADO');
   const [paidAt, setPaidAt] = useState(toDateInputValue(new Date()));
   const [notes, setNotes] = useState('');
+  const [appointmentId, setAppointmentId] = useState('');
+  const [appointments, setAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -69,6 +73,7 @@ const PaymentFormModal = ({
       setStatus(payment.status);
       setPaidAt(toDateInputValue(payment.paid_at));
       setNotes(payment.notes || '');
+      setAppointmentId(payment.appointment_id ? String(payment.appointment_id) : '');
     } else {
       setPatientId('');
       setAmount('');
@@ -76,9 +81,32 @@ const PaymentFormModal = ({
       setStatus('COMPLETADO');
       setPaidAt(toDateInputValue(new Date()));
       setNotes('');
+      setAppointmentId('');
     }
+    setAppointments([]);
     setError('');
   }, [open, payment]);
+
+  useEffect(() => {
+    const pid = isEditing ? payment?.patient_id : patientId;
+    const yaTieneTurno = isEditing && payment?.appointment_id;
+    if (!open || !pid || yaTieneTurno) {
+      setAppointments([]);
+      return;
+    }
+
+    setLoadingAppointments(true);
+    const start = new Date();
+    start.setMonth(start.getMonth() - 6);
+    const end = new Date();
+    end.setMonth(end.getMonth() + 3);
+
+    appointmentService
+      .getAll(start.toISOString(), end.toISOString(), { patientId: Number(pid) })
+      .then((data) => setAppointments(Array.isArray(data) ? data : data?.data || []))
+      .catch(() => setAppointments([]))
+      .finally(() => setLoadingAppointments(false));
+  }, [open, isEditing, patientId, payment]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,6 +114,16 @@ const PaymentFormModal = ({
 
     if (!isEditing && !patientId) {
       setError('Seleccioná un paciente');
+      return;
+    }
+
+    if (!isEditing && !appointmentId) {
+      setError('Seleccioná un turno');
+      return;
+    }
+
+    if (isEditing && !payment?.appointment_id && !appointmentId) {
+      setError('Asociá un turno al pago');
       return;
     }
 
@@ -98,17 +136,23 @@ const PaymentFormModal = ({
     try {
       setSaving(true);
 
+      let result;
       if (isEditing) {
-        await paymentService.update(payment.id, {
+        const payload = {
           amount: parsedAmount,
           payment_method: paymentMethod,
           status,
           paid_at: paidAt,
           notes: notes || undefined,
-        });
+        };
+        if (!payment.appointment_id && appointmentId) {
+          payload.appointment_id = Number(appointmentId);
+        }
+        result = await paymentService.update(payment.id, payload);
       } else {
-        await paymentService.create({
+        result = await paymentService.create({
           patient_id: Number(patientId),
+          appointment_id: Number(appointmentId),
           amount: parsedAmount,
           payment_method: paymentMethod,
           status,
@@ -117,7 +161,7 @@ const PaymentFormModal = ({
         });
       }
 
-      onSuccess?.();
+      onSuccess?.(result);
       onOpenChange(false);
     } catch (err) {
       setError(err.message);
@@ -170,6 +214,27 @@ const PaymentFormModal = ({
                 <div className="text-sm font-medium py-2 px-3 rounded-lg border border-border bg-muted/50">
                   {payment.patient.first_name} {payment.patient.last_name}
                 </div>
+              </div>
+            )}
+
+            {((!isEditing && patientId) || (isEditing && !payment?.appointment_id)) && (
+              <div className="grid gap-2">
+                <Label htmlFor="appointment">Turno</Label>
+                <Select value={appointmentId} onValueChange={setAppointmentId}>
+                  <SelectTrigger id="appointment">
+                    <SelectValue
+                      placeholder={loadingAppointments ? 'Cargando...' : 'Seleccionar turno...'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {appointments.map((a) => (
+                      <SelectItem key={a.id} value={String(a.id)}>
+                        {new Date(a.datetime).toLocaleString('es-AR')}
+                        {a.type?.name ? ` — ${a.type.name}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Modal (dialog) para crear o editar usuarios desde el panel de administración.
- * Solo accesible por SUPER_ADMIN y OWNER. Permite asignar cualquier rol,
- * cambiar contraseña (solo al crear) y activar/desactivar usuarios.
+ * Solo accesible por SUPER_ADMIN y OWNER. OWNER no puede asignar SUPER_ADMIN.
+ * Cambiar contraseña (solo al crear) y activar/desactivar usuarios.
  * 
  * Exporta también {@link ROLE_OPTIONS} y {@link ROLE_LABELS} para reutilizar
  * en otros componentes.
@@ -12,6 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import userService from '../services/userService';
+import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
 
 import {
@@ -120,9 +121,13 @@ const editUserSchema = z.object({
  * />
  */
 const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
+  const { user: actor } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState(null);
   const isEditing = Boolean(user);
+  const roleOptions = actor?.role === 'SUPER_ADMIN'
+    ? ROLE_OPTIONS
+    : ROLE_OPTIONS.filter((opt) => opt.value !== 'SUPER_ADMIN');
 
   const form = useForm({
     resolver: zodResolver(isEditing ? editUserSchema : createUserSchema),
@@ -328,7 +333,7 @@ const UserFormModal = ({ open, onOpenChange, onSuccess, user }) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {ROLE_OPTIONS.map((opt) => (
+                      {roleOptions.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </SelectItem>

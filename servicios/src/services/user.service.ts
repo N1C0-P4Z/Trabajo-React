@@ -1,9 +1,12 @@
+import fs from 'fs/promises';
+import path from 'path';
 import { hashPassword, comparePassword } from '../utils/bcrypt';
 import { userRepository } from '../repositories/user.repository';
 import { patientRepository } from '../repositories/patient.repository';
 import { AppError } from '../utils/errors';
 import { generateVerificationToken } from './email-verification.service';
 import { prisma } from '../config/database';
+import { UPLOAD_FINAL_DIR, isSafeAvatarPath } from '../middlewares/upload';
 
 // ============================================================
 // CATÁLOGO DE ESPECIALIDADES
@@ -34,6 +37,24 @@ export const VALID_ROLES = [
 ] as const;
 
 export type ValidRole = typeof VALID_ROLES[number];
+
+function assertCanManageTarget(
+  actor: { userId: number; role: string },
+  target: { id: number; role: string }
+): void {
+  if (actor.role === 'SUPER_ADMIN') {
+    return;
+  }
+  if (actor.role === 'OWNER' && target.role === 'SUPER_ADMIN') {
+    throw new AppError('No autorizado para modificar un SUPER_ADMIN', 403);
+  }
+}
+
+function assertCanAssignRole(actorRole: string, newRole: string): void {
+  if (newRole === 'SUPER_ADMIN' && actorRole !== 'SUPER_ADMIN') {
+    throw new AppError('No autorizado para asignar el rol SUPER_ADMIN', 403);
+  }
+}
 
 // ============================================================
 // VALIDADORES EXPANDIBLES
@@ -183,6 +204,28 @@ async function validateLicenseNumber(license: string, excludeUserId?: number): P
   return trimmed;
 }
 
+async function validateUserDni(dni: string | null | undefined, excludeUserId?: number): Promise<string | null> {
+  if (dni === undefined) {
+    return undefined as any;
+  }
+
+  if (dni === null || (typeof dni === 'string' && dni.trim() === '')) {
+    return null;
+  }
+
+  if (typeof dni !== 'string') {
+    throw new AppError('DNI inválido', 400, 'dni');
+  }
+
+  const trimmed = dni.trim();
+  const existing = await userRepository.findByDni(trimmed, excludeUserId);
+  if (existing) {
+    throw new AppError('El DNI ya está registrado', 409, 'dni');
+  }
+
+  return trimmed;
+}
+
 // ============================================================
 // SERVICIO DE USUARIOS
 // ============================================================
@@ -287,11 +330,20 @@ export const userService = {
     return newUser;
   },
 
-  async getAllUsers(role?: string) {
+  async getAllUsers(role?: string, requestingUser?: { userId: number; role: string } | null) {
+    if (role === 'SECRETARY') {
+      const isAllowed =
+        requestingUser &&
+        (requestingUser.role === 'SUPER_ADMIN' || requestingUser.role === 'OWNER');
+      if (!isAllowed) {
+        throw new AppError('No autorizado para ver secretarias', 403);
+      }
+    }
+
     return await userRepository.findAll(role);
   },
 
-  async getUserById(id: string | number) {
+  async getUserById(id: string | number, requestingUser?: { userId: number; role: string } | null) {
     const numId = typeof id === 'string' ? parseInt(id) : id;
     if (!numId || isNaN(numId)) {
       throw new Error('ID de usuario inválido');
@@ -300,6 +352,16 @@ export const userService = {
     const user = await userRepository.findById(numId);
     if (!user) {
       throw new Error('Usuario no encontrado');
+    }
+
+    if (user.role === 'SECRETARY') {
+      const isAdmin =
+        requestingUser &&
+        (requestingUser.role === 'SUPER_ADMIN' || requestingUser.role === 'OWNER');
+      const isSelf = requestingUser && requestingUser.userId === user.id;
+      if (!isAdmin && !isSelf) {
+        throw new AppError('Usuario no encontrado', 404);
+      }
     }
 
     return user;
@@ -316,11 +378,22 @@ export const userService = {
       throw new Error('Usuario no encontrado');
     }
 
-    // SUPER_ADMIN y OWNER pueden editar a cualquiera; el resto solo a sí mismos
+    // SUPER_ADMIN y OWNER pueden editar a cualquiera; el resto solo a sí mismos.
+    // OWNER no puede tocar cuentas SUPER_ADMIN ni asignar ese rol.
     if (requestingUser) {
       const isAdmin = requestingUser.role === 'SUPER_ADMIN' || requestingUser.role === 'OWNER';
       if (!isAdmin && requestingUser.userId !== userId) {
         throw new Error('No autorizado para editar este usuario');
+      }
+      if (isAdmin && requestingUser.userId !== userId) {
+        assertCanManageTarget(requestingUser, user);
+      } else if (!isAdmin) {
+        if (data.role !== undefined && data.role !== user.role) {
+          throw new AppError('No autorizado para cambiar el rol', 403);
+        }
+        if (data.is_active !== undefined && Boolean(data.is_active) !== Boolean(user.is_active)) {
+          throw new AppError('No autorizado para cambiar el estado', 403);
+        }
       }
     }
 
@@ -378,6 +451,9 @@ export const userService = {
     }
 
     if (data.specialty !== undefined) {
+      if (user.role !== 'DENTIST') {
+        throw new AppError('Solo los dentistas pueden tener especialidad', 403, 'specialty');
+      }
       if (data.specialty === null || data.specialty === '') {
         updateData.specialty = null;
       } else {
@@ -386,6 +462,9 @@ export const userService = {
     }
 
     if (data.license_number !== undefined) {
+      if (user.role !== 'DENTIST') {
+        throw new AppError('Solo los dentistas pueden tener matrícula', 403, 'license_number');
+      }
       if (data.license_number === null || data.license_number === '') {
         updateData.license_number = null;
       } else {
@@ -393,8 +472,26 @@ export const userService = {
       }
     }
 
+    if (data.dni !== undefined) {
+      updateData.dni = await validateUserDni(data.dni, userId);
+    }
+
+    if (data.direccion !== undefined) {
+      updateData.direccion =
+        data.direccion === null || (typeof data.direccion === 'string' && data.direccion.trim() === '')
+          ? null
+          : String(data.direccion).trim();
+    }
+
     if (data.is_active !== undefined) {
-      updateData.is_active = Boolean(data.is_active);
+      const nextActive = Boolean(data.is_active);
+      if (user.role === 'SUPER_ADMIN' && nextActive === false) {
+        const activeSuperAdmins = await userRepository.countByRole('SUPER_ADMIN', true);
+        if (activeSuperAdmins <= 1) {
+          throw new AppError('No se puede desactivar al último SUPER_ADMIN del sistema', 403);
+        }
+      }
+      updateData.is_active = nextActive;
     }
 
     if (data.avatar_url !== undefined) {
@@ -405,6 +502,15 @@ export const userService = {
       const validRoles: string[] = [...VALID_ROLES];
       if (!validRoles.includes(data.role)) {
         throw new AppError(`Rol inválido. Roles permitidos: ${validRoles.join(', ')}`, 400, 'role');
+      }
+      if (requestingUser) {
+        assertCanAssignRole(requestingUser.role, data.role);
+      }
+      if (user.role === 'SUPER_ADMIN' && data.role !== 'SUPER_ADMIN') {
+        const activeSuperAdmins = await userRepository.countByRole('SUPER_ADMIN', true);
+        if (activeSuperAdmins <= 1) {
+          throw new AppError('No se puede cambiar el rol del último SUPER_ADMIN del sistema', 403);
+        }
       }
       updateData.role = data.role;
     }
@@ -433,9 +539,19 @@ export const userService = {
       throw new AppError('No podés eliminar tu propia cuenta', 403);
     }
 
-    // Last SUPER_ADMIN guard: cannot delete the last SUPER_ADMIN
+    // Only SUPER_ADMIN and OWNER roles can delete users
+    if (!requestingUser || (requestingUser.role !== 'SUPER_ADMIN' && requestingUser.role !== 'OWNER')) {
+      throw new AppError('No autorizado para eliminar usuarios', 403);
+    }
+
+    // OWNER cannot delete SUPER_ADMIN accounts
+    if (requestingUser.role === 'OWNER' && user.role === 'SUPER_ADMIN') {
+      throw new AppError('No se puede eliminar a un SUPER_ADMIN', 403);
+    }
+
+    // Last SUPER_ADMIN guard: only active SUPER_ADMIN rows count
     if (user.role === 'SUPER_ADMIN') {
-      const superAdminCount = await userRepository.countByRole('SUPER_ADMIN');
+      const superAdminCount = await userRepository.countByRole('SUPER_ADMIN', true);
       if (superAdminCount <= 1) {
         throw new AppError('No se puede eliminar al último SUPER_ADMIN del sistema', 403);
       }
@@ -444,11 +560,6 @@ export const userService = {
     // OWNER accounts cannot be deleted
     if (user.role === 'OWNER') {
       throw new AppError('No se puede eliminar al administrador del sistema', 403);
-    }
-
-    // Only SUPER_ADMIN and OWNER roles can delete users
-    if (!requestingUser || (requestingUser.role !== 'SUPER_ADMIN' && requestingUser.role !== 'OWNER')) {
-      throw new AppError('No autorizado para eliminar usuarios', 403);
     }
 
     await userRepository.delete(userId);
@@ -582,10 +693,80 @@ export const userService = {
     return { message: 'Cuenta eliminada exitosamente' };
   },
 
+  async getAvatarForViewer(
+    requester: { userId: number; role: string },
+    targetUserId: number
+  ): Promise<{ filePath: string; contentType: string }> {
+    const target = await prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!target || !target.avatar_url) {
+      throw new AppError('Avatar no encontrado', 404);
+    }
+
+    if (target.role === 'SECRETARY') {
+      const isAdmin = requester.role === 'SUPER_ADMIN' || requester.role === 'OWNER';
+      const isSelf = requester.userId === targetUserId;
+      if (!isAdmin && !isSelf) {
+        throw new AppError('Avatar no encontrado', 404);
+      }
+    }
+
+    if (requester.userId !== targetUserId) {
+      const staffRoles = ['SUPER_ADMIN', 'OWNER', 'SECRETARY'];
+      if (!staffRoles.includes(requester.role)) {
+        if (target.role === 'PATIENT') {
+          if (requester.role === 'PATIENT') {
+            throw new AppError('No autorizado', 403);
+          }
+          if (requester.role === 'DENTIST') {
+            const hasAppointment = await prisma.appointment.findFirst({
+              where: {
+                patient_id: targetUserId,
+                doctor_id: requester.userId,
+              },
+            });
+            if (!hasAppointment) {
+              throw new AppError('No autorizado', 403);
+            }
+          }
+        }
+      }
+    }
+
+    const filename = path.basename(target.avatar_url);
+    const filePath = path.join(UPLOAD_FINAL_DIR, filename);
+
+    if (!isSafeAvatarPath(filePath)) {
+      throw new AppError('Avatar no encontrado', 404);
+    }
+
+    try {
+      await fs.access(filePath);
+    } catch {
+      throw new AppError('Avatar no encontrado', 404);
+    }
+
+    const ext = path.extname(filename).toLowerCase();
+    const contentType = ext === '.png' ? 'image/png' : 'image/jpeg';
+
+    return { filePath, contentType };
+  },
+
   async updateAvatar(userId: number, avatarUrl: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new AppError('Usuario no encontrado', 404);
+    }
+
+    if (user.avatar_url) {
+      const oldFilename = path.basename(user.avatar_url);
+      const oldPath = path.join(UPLOAD_FINAL_DIR, oldFilename);
+      if (isSafeAvatarPath(oldPath)) {
+        try {
+          await fs.unlink(oldPath);
+        } catch {
+          // prior file may already be gone
+        }
+      }
     }
 
     const updated = await prisma.user.update({

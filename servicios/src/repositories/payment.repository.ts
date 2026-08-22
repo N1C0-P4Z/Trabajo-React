@@ -9,6 +9,7 @@ const publicUserSelect = {
   phone: true,
   role: true,
   is_active: true,
+  dni: true,
 };
 
 const paymentPublicSelect = {
@@ -22,6 +23,7 @@ const paymentPublicSelect = {
   paid_at: true,
   created_by: true,
   created_at: true,
+  receipt_number: true,
   patient: {
     select: publicUserSelect,
   },
@@ -30,10 +32,52 @@ const paymentPublicSelect = {
       id: true,
       datetime: true,
       status: true,
+      type: { select: { name: true } },
+      doctor: { select: { first_name: true, last_name: true } },
     },
   },
   recorder: {
     select: publicUserSelect,
+  },
+};
+
+const receiptPaymentSelect = {
+  id: true,
+  patient_id: true,
+  appointment_id: true,
+  amount: true,
+  payment_method: true,
+  status: true,
+  paid_at: true,
+  receipt_number: true,
+  patient: {
+    select: {
+      id: true,
+      first_name: true,
+      last_name: true,
+      dni: true,
+      role: true,
+      patient: {
+        select: {
+          dni: true,
+          obra_social: true,
+        },
+      },
+    },
+  },
+  appointment: {
+    select: {
+      obra_social: true,
+      type: {
+        select: { name: true },
+      },
+      doctor: {
+        select: {
+          first_name: true,
+          last_name: true,
+        },
+      },
+    },
   },
 };
 
@@ -118,6 +162,13 @@ export const paymentRepository = {
     });
   },
 
+  async findByIdForReceipt(id: number) {
+    return await prisma.payment.findUnique({
+      where: { id },
+      select: receiptPaymentSelect,
+    });
+  },
+
   async create(data: {
     patient_id: number;
     appointment_id?: number | null;
@@ -127,6 +178,7 @@ export const paymentRepository = {
     notes?: string | null;
     paid_at?: Date;
     created_by?: number | null;
+    receipt_number?: number | null;
   }) {
     return await prisma.payment.create({
       data,
@@ -140,11 +192,84 @@ export const paymentRepository = {
     status?: string;
     notes?: string | null;
     paid_at?: Date;
+    appointment_id?: number | null;
+    receipt_number?: number | null;
   }) {
     return await prisma.payment.update({
       where: { id },
       data,
       select: paymentPublicSelect,
+    });
+  },
+
+  async listMine(patientId: number, pagina = 1, limite = 10) {
+    const where = {
+      patient_id: patientId,
+      status: { in: ['COMPLETADO', 'ANULADO'] },
+    };
+
+    const [data, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        select: paymentPublicSelect,
+        skip: (pagina - 1) * limite,
+        take: limite,
+        orderBy: { paid_at: 'desc' },
+      }),
+      prisma.payment.count({ where }),
+    ]);
+
+    return { data, total };
+  },
+
+  async saveReceiptToken(paymentId: number, hash: string, expiresAt: Date) {
+    await prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        receipt_token_hash: hash,
+        receipt_token_expires_at: expiresAt,
+      },
+    });
+  },
+
+  async findEligibleByTokenHash(hash: string) {
+    return await prisma.payment.findFirst({
+      where: {
+        receipt_token_hash: hash,
+        receipt_token_expires_at: { gt: new Date() },
+        status: { in: ['COMPLETADO', 'ANULADO'] },
+        appointment_id: { not: null },
+      },
+      select: receiptPaymentSelect,
+    });
+  },
+
+  async assignReceiptNumber(paymentId: number): Promise<number> {
+    return await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.findUnique({
+        where: { id: paymentId },
+        select: { receipt_number: true },
+      });
+
+      if (!payment) {
+        throw new Error('Pago no encontrado');
+      }
+
+      if (payment.receipt_number != null) {
+        return payment.receipt_number;
+      }
+
+      const maxResult = await tx.payment.aggregate({
+        _max: { receipt_number: true },
+      });
+      const nextNumber = (maxResult._max.receipt_number ?? 0) + 1;
+
+      await tx.payment.update({
+        where: { id: paymentId },
+        data: { receipt_number: nextNumber },
+      });
+
+      return nextNumber;
     });
   },
 };

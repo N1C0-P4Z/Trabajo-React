@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { fetchAvatarObjectUrl, revokeAvatarObjectUrl } from '../services/avatarService';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   useSidebar,
   SidebarContent,
@@ -13,12 +15,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck, User } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck, User, Contact, FileText } from 'lucide-react';
 import DevRoleSwitcher from './DevRoleSwitcher';
 
 const menuItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { title: 'Dentistas', path: '/dentists', icon: Stethoscope },
+  { title: 'Secretarias', path: '/secretaries', icon: Contact },
   { title: 'Pacientes', path: '/patients', icon: Users },
   { title: 'Agenda', path: '/appointments', icon: CalendarDays },
   { title: 'Obras Sociales', path: '/insurance', icon: Shield },
@@ -28,20 +31,22 @@ const menuItems = [
 const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
 
 const ROLE_MENU_ITEMS = {
-  PATIENT: ['/dashboard', '/appointments', '/profile'],
+  PATIENT: ['/dashboard', '/appointments', '/my-receipts', '/profile'],
   DENTIST: ['/dashboard', '/patients', '/appointments', '/profile'],
-  SECRETARY: ['/dashboard', '/dentists', '/patients', '/appointments', '/insurance', '/payments'],
-  OWNER: null,
+  SECRETARY: ['/dashboard', '/dentists', '/patients', '/appointments', '/insurance', '/payments', '/profile'],
+  OWNER: ['/dashboard', '/dentists', '/secretaries', '/patients', '/appointments', '/insurance', '/payments', '/admin', '/profile'],
   SUPER_ADMIN: null,
 };
 
 const iconMap = {
   '/dashboard': LayoutDashboard,
   '/dentists': Stethoscope,
+  '/secretaries': Contact,
   '/patients': Users,
   '/appointments': CalendarDays,
   '/insurance': Shield,
   '/payments': Wallet,
+  '/my-receipts': FileText,
   '/admin': ShieldCheck,
   '/profile': User,
 };
@@ -49,10 +54,12 @@ const iconMap = {
 const titleMap = {
   '/dashboard': 'Dashboard',
   '/dentists': 'Dentistas',
+  '/secretaries': 'Secretarias',
   '/patients': 'Pacientes',
   '/appointments': 'Agenda',
   '/insurance': 'Obras Sociales',
   '/payments': 'Pagos',
+  '/my-receipts': 'Mis comprobantes',
   '/admin': 'Admin',
   '/profile': 'Mi Perfil',
 };
@@ -62,6 +69,47 @@ const AppSidebar = () => {
   const navigate = useNavigate();
   const { user, realUser, logout } = useAuth();
   const { open, toggleSidebar, isMobile } = useSidebar();
+  const [footerAvatarUrl, setFooterAvatarUrl] = useState(null);
+
+  const displayUser = user || realUser;
+
+  useEffect(() => {
+    let cancelled = false;
+    let loadedUrl = null;
+
+    async function loadFooterAvatar() {
+      if (!displayUser?.id || !displayUser?.avatar_url) {
+        setFooterAvatarUrl((prev) => {
+          revokeAvatarObjectUrl(prev);
+          return null;
+        });
+        return;
+      }
+
+      const objectUrl = await fetchAvatarObjectUrl(displayUser.id);
+      if (cancelled) {
+        revokeAvatarObjectUrl(objectUrl);
+        return;
+      }
+
+      loadedUrl = objectUrl;
+      setFooterAvatarUrl((prev) => {
+        revokeAvatarObjectUrl(prev);
+        return objectUrl;
+      });
+    }
+
+    loadFooterAvatar();
+
+    return () => {
+      cancelled = true;
+      revokeAvatarObjectUrl(loadedUrl);
+    };
+  }, [displayUser?.id, displayUser?.avatar_url]);
+
+  const footerInitials = displayUser
+    ? `${(displayUser.first_name || '')[0] || ''}${(displayUser.last_name || '')[0] || ''}`.toUpperCase()
+    : '';
 
   const visibleMenuItems = (() => {
     if (!user) return [];
@@ -156,11 +204,21 @@ const AppSidebar = () => {
           <SidebarFooter>
             <div className="border-t border-sidebar-border px-4 py-3">
               <DevRoleSwitcher />
-              {realUser && (
-                <p className="text-xs text-sidebar-foreground/60 mb-2 truncate">
-                  {realUser.first_name} {realUser.last_name}
-                  {user?.role !== realUser.role ? ` · simulando ${user.role}` : ''}
-                </p>
+              {displayUser && (
+                <div className="flex items-center gap-2 mb-2 min-w-0">
+                  <Avatar className="size-8 shrink-0">
+                    {footerAvatarUrl ? (
+                      <AvatarImage src={footerAvatarUrl} alt="" />
+                    ) : null}
+                    <AvatarFallback className="text-xs">
+                      {footerInitials || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-xs text-sidebar-foreground truncate">
+                    {displayUser.first_name} {displayUser.last_name}
+                    {realUser && user?.role !== realUser.role ? ` · simulando ${user.role}` : ''}
+                  </p>
+                </div>
               )}
               <SidebarMenu>
                 <SidebarMenuItem>

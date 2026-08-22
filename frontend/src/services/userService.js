@@ -60,6 +60,19 @@ const userService = {
     return await response.json();
   },
 
+  async getSecretaries() {
+    const response = await fetch(`${API_URL}?role=SECRETARY`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al obtener secretarias');
+    }
+
+    return await response.json();
+  },
+
   async createDoctor(data) {
     const response = await fetch(API_URL, {
       method: 'POST',

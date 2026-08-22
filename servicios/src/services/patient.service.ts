@@ -129,14 +129,31 @@ export const patientService = {
   ) {
     const numId = validatePatientId(id);
 
-    // Autorización: solo SUPER_ADMIN y OWNER
-    if (!requestingUser || (requestingUser.role !== 'SUPER_ADMIN' && requestingUser.role !== 'OWNER')) {
+    if (!requestingUser) {
       throw new Error('No autorizado para gestionar pacientes');
     }
 
     const patient = await patientRepository.findById(numId);
     if (!patient) {
       throw new Error('Paciente no encontrado');
+    }
+
+    const { role, userId } = requestingUser;
+    const staffRoles = ['SUPER_ADMIN', 'OWNER', 'SECRETARY'];
+
+    if (role === 'PATIENT') {
+      if (patient.user_id !== userId) {
+        throw new Error('No autorizado para editar este paciente');
+      }
+      if (data.is_active !== undefined) {
+        throw new Error('No autorizado para cambiar el estado del paciente');
+      }
+    } else if (staffRoles.includes(role)) {
+      // staff may edit any patient
+    } else if (role === 'DENTIST') {
+      throw new Error('No autorizado para gestionar pacientes');
+    } else {
+      throw new Error('No autorizado para gestionar pacientes');
     }
 
     const updateData: any = {};
@@ -174,6 +191,22 @@ export const patientService = {
 
     if (data.telefono_alternativo !== undefined) {
       updateData.telefono_alternativo = data.telefono_alternativo === '' ? null : data.telefono_alternativo;
+    }
+
+    if (data.contacto_emergencia !== undefined) {
+      updateData.contacto_emergencia = data.contacto_emergencia === '' ? null : data.contacto_emergencia;
+    }
+
+    if (data.telefono_emergencia !== undefined) {
+      updateData.telefono_emergencia = data.telefono_emergencia === '' ? null : data.telefono_emergencia;
+    }
+
+    if (data.alergias !== undefined) {
+      updateData.alergias = data.alergias === '' ? null : data.alergias;
+    }
+
+    if (data.notas !== undefined && staffRoles.includes(role)) {
+      updateData.notas = data.notas === '' ? null : data.notas;
     }
 
     if (data.is_active !== undefined) {

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@fontsource-variable/inter": "^5.2.8",
     "@hookform/resolvers": "^5.4.0",
     "@hugeicons/core-free-icons": "^4.1.1",

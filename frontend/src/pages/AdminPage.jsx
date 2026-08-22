@@ -104,17 +104,25 @@ const AdminPage = () => {
 
   // --- Handlers ---
 
+  const canManageUser = (target) => {
+    if (!user || !target) return false;
+    if (target.role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') return false;
+    return true;
+  };
+
   const handleCreateUser = () => {
     setEditingUser(null);
     setFormModalOpen(true);
   };
 
   const handleEditUser = (userToEdit) => {
+    if (!canManageUser(userToEdit)) return;
     setEditingUser(userToEdit);
     setFormModalOpen(true);
   };
 
   const handleDeleteClick = (userToDelete) => {
+    if (!canManageUser(userToDelete)) return;
     setDeletingUser(userToDelete);
     setDeleteDialogOpen(true);
   };
@@ -284,24 +292,28 @@ const AdminPage = () => {
                   {u.phone || '—'}
                 </div>
                 <div className="col-span-1 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => handleEditUser(u)}
-                    title="Editar usuario"
-                    className="size-7"
-                  >
-                    <Pencil className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => handleDeleteClick(u)}
-                    title="Eliminar usuario"
-                    className="size-7 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                  {canManageUser(u) && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleEditUser(u)}
+                        title="Editar usuario"
+                        className="size-7"
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDeleteClick(u)}
+                        title="Eliminar usuario"
+                        className="size-7 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

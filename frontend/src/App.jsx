@@ -10,10 +10,14 @@ import AdminPage from './pages/AdminPage';
 import AgendaPage from './pages/AgendaPage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorProfilePage from './pages/DoctorProfilePage';
+import SecretariesPage from './pages/SecretariesPage';
+import SecretaryProfilePage from './pages/SecretaryProfilePage';
 import PatientsPage from './pages/PatientsPage';
 import PatientProfilePage from './pages/PatientProfilePage';
 import ProfilePage from './pages/ProfilePage';
 import PaymentsPage from './pages/PaymentsPage';
+import PatientReceiptsPage from './pages/PatientReceiptsPage';
+import ReceiptPreviewPage from './pages/ReceiptPreviewPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
@@ -55,6 +59,8 @@ function App() {
         } 
       />
 
+      <Route path="/receipt-preview" element={<ReceiptPreviewPage />} />
+
       {/* Protected routes with Sidebar layout */}
       <Route element={
         <ProtectedRoute>
@@ -89,6 +95,16 @@ function App() {
             </RoleProtectedRoute>
           } 
         />
+        <Route path="/secretaries" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <SecretariesPage />
+          </RoleProtectedRoute>
+        } />
+        <Route path="/secretaries/:id" element={
+          <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER']}>
+            <SecretaryProfilePage />
+          </RoleProtectedRoute>
+        } />
         <Route path="/patients" element={
           <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY', 'DENTIST']}>
             <PatientsPage />
@@ -116,6 +132,14 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <PaymentsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-receipts"
+          element={
+            <RoleProtectedRoute allowedRoles={['PATIENT']}>
+              <PatientReceiptsPage />
             </RoleProtectedRoute>
           }
         />

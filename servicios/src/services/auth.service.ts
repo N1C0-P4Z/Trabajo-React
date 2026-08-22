@@ -46,7 +46,13 @@ export const authService = {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        role: user.role
+        phone: user.phone,
+        role: user.role,
+        avatar_url: user.avatar_url,
+        specialty: user.specialty,
+        license_number: user.license_number,
+        dni: user.dni,
+        direccion: user.direccion,
       }
     };
   },

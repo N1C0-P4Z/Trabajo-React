@@ -33,20 +33,25 @@ function formatDate(dateString) {
   }
 }
 
-const DoctorProfilePage = () => {
+const SecretaryProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [doctor, setDoctor] = useState(null);
+  const [secretary, setSecretary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [avatarObjectUrl, setAvatarObjectUrl] = useState(null);
 
-  const loadDoctor = useCallback(async () => {
+  const loadSecretary = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await userService.getUserById(id);
-      setDoctor(data);
+      if (data.role !== 'SECRETARY') {
+        setSecretary(null);
+        setError('Secretaria no encontrada');
+        return;
+      }
+      setSecretary(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -55,15 +60,15 @@ const DoctorProfilePage = () => {
   }, [id]);
 
   useEffect(() => {
-    loadDoctor();
-  }, [loadDoctor]);
+    loadSecretary();
+  }, [loadSecretary]);
 
   useEffect(() => {
     let cancelled = false;
     let loadedUrl = null;
 
     async function loadAvatar() {
-      if (!doctor?.id || !doctor?.avatar_url) {
+      if (!secretary?.id || !secretary?.avatar_url) {
         setAvatarObjectUrl((prev) => {
           revokeAvatarObjectUrl(prev);
           return null;
@@ -71,7 +76,7 @@ const DoctorProfilePage = () => {
         return;
       }
 
-      const objectUrl = await fetchAvatarObjectUrl(doctor.id);
+      const objectUrl = await fetchAvatarObjectUrl(secretary.id);
       if (cancelled) {
         revokeAvatarObjectUrl(objectUrl);
         return;
@@ -84,7 +89,7 @@ const DoctorProfilePage = () => {
       });
     }
 
-    if (doctor) {
+    if (secretary) {
       loadAvatar();
     }
 
@@ -92,9 +97,8 @@ const DoctorProfilePage = () => {
       cancelled = true;
       revokeAvatarObjectUrl(loadedUrl);
     };
-  }, [doctor?.id, doctor?.avatar_url]);
+  }, [secretary?.id, secretary?.avatar_url]);
 
-  // Loading
   if (loading) {
     return (
       <div className="text-center py-16">
@@ -104,25 +108,23 @@ const DoctorProfilePage = () => {
     );
   }
 
-  // Error or not found
-  if (error || !doctor) {
+  if (error || !secretary) {
     return (
       <div className="text-center py-16">
         <p className="text-muted-foreground mb-4">
-          {error || 'Doctor no encontrado.'}
+          {error || 'Secretaria no encontrada'}
         </p>
-        <Button variant="outline" onClick={() => navigate('/dentists')}>
-          Volver a Dentistas
+        <Button variant="outline" onClick={() => navigate('/secretaries')}>
+          Volver a Secretarias
         </Button>
       </div>
     );
   }
 
-  const isActive = doctor.is_active !== false;
+  const isActive = secretary.is_active !== false;
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -133,42 +135,36 @@ const DoctorProfilePage = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/dentists">Dentistas</Link>
+              <Link to="/secretaries">Secretarias</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>
-              {doctor.first_name} {doctor.last_name}
+              {secretary.first_name} {secretary.last_name}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Profile Header */}
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex flex-col sm:flex-row items-start gap-6">
-          {/* Avatar */}
           <Avatar size="lg" className="size-20 text-lg">
             {avatarObjectUrl ? (
               <AvatarImage
                 src={avatarObjectUrl}
-                alt={`${doctor.first_name} ${doctor.last_name}`}
+                alt={`${secretary.first_name} ${secretary.last_name}`}
               />
             ) : null}
             <AvatarFallback className="text-xl">
-              {getInitials(doctor.first_name, doctor.last_name)}
+              {getInitials(secretary.first_name, secretary.last_name)}
             </AvatarFallback>
           </Avatar>
 
-          {/* Name & Specialty */}
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-foreground">
-              {doctor.first_name} {doctor.last_name}
+              {secretary.first_name} {secretary.last_name}
             </h1>
-            {doctor.specialty && (
-              <p className="text-sm text-muted-foreground mt-1">{doctor.specialty}</p>
-            )}
             <div className="mt-3">
               <Badge
                 variant={isActive ? 'default' : 'secondary'}
@@ -183,68 +179,55 @@ const DoctorProfilePage = () => {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/appointments?doctorId=${doctor.id}`)}
-              disabled={!isActive}
-            >
-              Ver Agenda
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/dentists')}>
+            <Button variant="outline" onClick={() => navigate('/secretaries')}>
               Volver
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Information Section */}
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-sm font-semibold text-foreground mb-4">Información</h2>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
           <div>
             <dt className="text-xs text-muted-foreground">Email</dt>
-            <dd className="text-sm text-foreground mt-0.5">{doctor.email}</dd>
+            <dd className="text-sm text-foreground mt-0.5">{secretary.email}</dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">Teléfono</dt>
-            <dd className="text-sm text-foreground mt-0.5">{doctor.phone}</dd>
+            <dd className="text-sm text-foreground mt-0.5">{secretary.phone}</dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Matrícula</dt>
+            <dt className="text-xs text-muted-foreground">DNI</dt>
             <dd className="text-sm text-foreground mt-0.5">
-              {doctor.license_number || '—'}
+              {secretary.dni || '—'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Dirección</dt>
+            <dd className="text-sm text-foreground mt-0.5">
+              {secretary.direccion || '—'}
             </dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">Rol</dt>
-            <dd className="text-sm text-foreground mt-0.5">{doctor.role}</dd>
+            <dd className="text-sm text-foreground mt-0.5">{secretary.role}</dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">Fecha de registro</dt>
             <dd className="text-sm text-foreground mt-0.5">
-              {formatDate(doctor.created_at)}
+              {formatDate(secretary.created_at)}
             </dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">Nombre de usuario</dt>
-            <dd className="text-sm text-foreground mt-0.5">{doctor.username}</dd>
+            <dd className="text-sm text-foreground mt-0.5">{secretary.username}</dd>
           </div>
         </dl>
-      </div>
-
-      {/* Upcoming Appointments (Placeholder) */}
-      <div className="bg-card border border-border rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-foreground mb-4">Próximos turnos</h2>
-        <div className="text-center py-8">
-          <p className="text-sm text-muted-foreground">
-            La agenda de turnos estará disponible próximamente.
-          </p>
-        </div>
       </div>
     </div>
   );
 };
 
-export default DoctorProfilePage;
+export default SecretaryProfilePage;
