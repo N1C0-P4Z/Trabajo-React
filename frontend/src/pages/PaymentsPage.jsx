@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import paymentService from '../services/paymentService';
 import patientService from '../services/patientService';
+import { trySendReceiptEmail } from '../services/receiptEmail';
 import PaymentFormModal, { PAYMENT_METHODS, STATUS_OPTIONS } from '../components/PaymentFormModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -168,8 +169,11 @@ const PaymentsPage = () => {
     loadPayments(filters, page);
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = async (payment) => {
     toast.success(editingPayment ? 'Pago actualizado' : 'Pago registrado');
+    if (payment?.preview_token) {
+      await trySendReceiptEmail(payment, payment.preview_token);
+    }
     setEditingPayment(null);
     goToPage(pagina);
   };

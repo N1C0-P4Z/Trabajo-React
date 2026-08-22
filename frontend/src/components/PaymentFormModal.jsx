@@ -136,6 +136,7 @@ const PaymentFormModal = ({
     try {
       setSaving(true);
 
+      let result;
       if (isEditing) {
         const payload = {
           amount: parsedAmount,
@@ -147,9 +148,9 @@ const PaymentFormModal = ({
         if (!payment.appointment_id && appointmentId) {
           payload.appointment_id = Number(appointmentId);
         }
-        await paymentService.update(payment.id, payload);
+        result = await paymentService.update(payment.id, payload);
       } else {
-        await paymentService.create({
+        result = await paymentService.create({
           patient_id: Number(patientId),
           appointment_id: Number(appointmentId),
           amount: parsedAmount,
@@ -160,7 +161,7 @@ const PaymentFormModal = ({
         });
       }
 
-      onSuccess?.();
+      onSuccess?.(result);
       onOpenChange(false);
     } catch (err) {
       setError(err.message);
