@@ -17,6 +17,7 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import ProfilePage from './pages/ProfilePage';
 import PaymentsPage from './pages/PaymentsPage';
 import PatientReceiptsPage from './pages/PatientReceiptsPage';
+import ReceiptPreviewPage from './pages/ReceiptPreviewPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
@@ -57,6 +58,8 @@ function App() {
           )
         } 
       />
+
+      <Route path="/receipt-preview" element={<ReceiptPreviewPage />} />
 
       {/* Protected routes with Sidebar layout */}
       <Route element={
