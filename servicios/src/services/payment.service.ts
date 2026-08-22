@@ -226,6 +226,16 @@ export const paymentService = {
     return preview_token ? { ...result, preview_token } : result;
   },
 
+  async listMine(
+    patientId: number,
+    filters: { pagina?: number; limite?: number } = {}
+  ) {
+    const pagina = filters.pagina || 1;
+    const limite = filters.limite || 10;
+    const { data, total } = await paymentRepository.listMine(patientId, pagina, limite);
+    return { data, total, pagina, limite };
+  },
+
   async getReceiptPdf(
     id: string | number,
     requestingUser: { userId: number; role: string }

@@ -32,6 +32,8 @@ const paymentPublicSelect = {
       id: true,
       datetime: true,
       status: true,
+      type: { select: { name: true } },
+      doctor: { select: { first_name: true, last_name: true } },
     },
   },
   recorder: {
@@ -198,6 +200,26 @@ export const paymentRepository = {
       data,
       select: paymentPublicSelect,
     });
+  },
+
+  async listMine(patientId: number, pagina = 1, limite = 10) {
+    const where = {
+      patient_id: patientId,
+      status: { in: ['COMPLETADO', 'ANULADO'] },
+    };
+
+    const [data, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        select: paymentPublicSelect,
+        skip: (pagina - 1) * limite,
+        take: limite,
+        orderBy: { paid_at: 'desc' },
+      }),
+      prisma.payment.count({ where }),
+    ]);
+
+    return { data, total };
   },
 
   async saveReceiptToken(paymentId: number, hash: string, expiresAt: Date) {

@@ -70,6 +70,21 @@ export const paymentController = {
     }
   },
 
+  async listMine(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { pagina = '1', limite = '10' } = req.query;
+      const userId = (req as any).user.userId;
+
+      const result = await paymentService.listMine(userId, {
+        pagina: Number(pagina) || 1,
+        limite: Number(limite) || 10,
+      });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async getReceiptPdf(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
