@@ -232,6 +232,18 @@ export const paymentRepository = {
     });
   },
 
+  async findEligibleByTokenHash(hash: string) {
+    return await prisma.payment.findFirst({
+      where: {
+        receipt_token_hash: hash,
+        receipt_token_expires_at: { gt: new Date() },
+        status: { in: ['COMPLETADO', 'ANULADO'] },
+        appointment_id: { not: null },
+      },
+      select: receiptPaymentSelect,
+    });
+  },
+
   async assignReceiptNumber(paymentId: number): Promise<number> {
     return await prisma.$transaction(async (tx) => {
       const payment = await tx.payment.findUnique({

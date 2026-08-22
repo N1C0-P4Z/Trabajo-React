@@ -274,4 +274,33 @@ export const paymentService = {
 
     return { buffer, filename: `comprobante-${year}-${nro}.pdf` };
   },
+
+  async getReceiptPdfByToken(token: string): Promise<{ buffer: Buffer; filename: string }> {
+    if (!token || typeof token !== 'string') {
+      throw new AppError('Comprobante no encontrado', 404);
+    }
+
+    const hash = createHash('sha256').update(token).digest('hex');
+    const payment = await paymentRepository.findEligibleByTokenHash(hash);
+    if (!payment) {
+      throw new AppError('Comprobante no encontrado', 404);
+    }
+
+    if (payment.receipt_number == null && payment.status === 'COMPLETADO') {
+      await paymentRepository.assignReceiptNumber(payment.id);
+      const refreshed = await paymentRepository.findEligibleByTokenHash(hash);
+      if (!refreshed) {
+        throw new AppError('Comprobante no encontrado', 404);
+      }
+      const buffer = await buildReceiptPdf(refreshed);
+      const year = refreshed.paid_at.getFullYear();
+      const nro = refreshed.receipt_number ?? 0;
+      return { buffer, filename: `comprobante-${year}-${nro}.pdf` };
+    }
+
+    const buffer = await buildReceiptPdf(payment);
+    const year = payment.paid_at.getFullYear();
+    const nro = payment.receipt_number ?? 0;
+    return { buffer, filename: `comprobante-${year}-${nro}.pdf` };
+  },
 };
