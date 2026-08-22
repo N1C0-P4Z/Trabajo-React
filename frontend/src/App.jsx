@@ -16,6 +16,7 @@ import PatientsPage from './pages/PatientsPage';
 import PatientProfilePage from './pages/PatientProfilePage';
 import ProfilePage from './pages/ProfilePage';
 import PaymentsPage from './pages/PaymentsPage';
+import PatientReceiptsPage from './pages/PatientReceiptsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
@@ -128,6 +129,14 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'OWNER', 'SECRETARY']}>
               <PaymentsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-receipts"
+          element={
+            <RoleProtectedRoute allowedRoles={['PATIENT']}>
+              <PatientReceiptsPage />
             </RoleProtectedRoute>
           }
         />

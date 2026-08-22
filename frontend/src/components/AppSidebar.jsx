@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck, User, Contact } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Users, CalendarDays, Shield, Wallet, ShieldCheck, User, Contact, FileText } from 'lucide-react';
 import DevRoleSwitcher from './DevRoleSwitcher';
 
 const menuItems = [
@@ -31,7 +31,7 @@ const menuItems = [
 const adminItem = { title: 'Admin', path: '/admin', icon: ShieldCheck };
 
 const ROLE_MENU_ITEMS = {
-  PATIENT: ['/dashboard', '/appointments', '/profile'],
+  PATIENT: ['/dashboard', '/appointments', '/my-receipts', '/profile'],
   DENTIST: ['/dashboard', '/patients', '/appointments', '/profile'],
   SECRETARY: ['/dashboard', '/dentists', '/patients', '/appointments', '/insurance', '/payments', '/profile'],
   OWNER: ['/dashboard', '/dentists', '/secretaries', '/patients', '/appointments', '/insurance', '/payments', '/admin', '/profile'],
@@ -46,6 +46,7 @@ const iconMap = {
   '/appointments': CalendarDays,
   '/insurance': Shield,
   '/payments': Wallet,
+  '/my-receipts': FileText,
   '/admin': ShieldCheck,
   '/profile': User,
 };
@@ -58,6 +59,7 @@ const titleMap = {
   '/appointments': 'Agenda',
   '/insurance': 'Obras Sociales',
   '/payments': 'Pagos',
+  '/my-receipts': 'Mis comprobantes',
   '/admin': 'Admin',
   '/profile': 'Mi Perfil',
 };
