@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'crypto';
 import { prisma } from '../config/database';
 import { paymentRepository, PaymentFilters } from '../repositories/payment.repository';
 import { AppError } from '../utils/errors';
@@ -19,6 +20,21 @@ function assertWriteAccess(requestingUser?: { userId: number; role: string } | n
   if (!requestingUser || !STAFF_ROLES.includes(requestingUser.role)) {
     throw new Error('No autorizado para gestionar pagos');
   }
+}
+
+async function issuePreviewToken(paymentId: number): Promise<string> {
+  const raw = randomBytes(32).toString('base64url');
+  const hash = createHash('sha256').update(raw).digest('hex');
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+  await paymentRepository.saveReceiptToken(paymentId, hash, expiresAt);
+  return raw;
+}
+
+function shouldIssueToken(status: string, previousStatus?: string): boolean {
+  if (status !== 'COMPLETADO' && status !== 'ANULADO') return false;
+  if (previousStatus === undefined) return true;
+  return status !== previousStatus;
 }
 
 export const paymentService = {
@@ -104,7 +120,13 @@ export const paymentService = {
       await paymentRepository.assignReceiptNumber(payment.id);
     }
 
-    return await paymentRepository.findById(payment.id);
+    let preview_token: string | undefined;
+    if (shouldIssueToken(paymentStatus)) {
+      preview_token = await issuePreviewToken(payment.id);
+    }
+
+    const result = await paymentRepository.findById(payment.id);
+    return preview_token ? { ...result, preview_token } : result;
   },
 
   async updatePayment(
@@ -189,11 +211,19 @@ export const paymentService = {
 
     await paymentRepository.update(numId, updateData);
 
+    const finalStatus = data.status ?? previousStatus;
+
     if (data.status === 'COMPLETADO' && previousStatus !== 'COMPLETADO') {
       await paymentRepository.assignReceiptNumber(numId);
     }
 
-    return await paymentRepository.findById(numId);
+    let preview_token: string | undefined;
+    if (data.status !== undefined && shouldIssueToken(finalStatus, previousStatus)) {
+      preview_token = await issuePreviewToken(numId);
+    }
+
+    const result = await paymentRepository.findById(numId);
+    return preview_token ? { ...result, preview_token } : result;
   },
 
   async getReceiptPdf(

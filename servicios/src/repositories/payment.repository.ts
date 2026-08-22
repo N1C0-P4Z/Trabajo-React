@@ -200,6 +200,16 @@ export const paymentRepository = {
     });
   },
 
+  async saveReceiptToken(paymentId: number, hash: string, expiresAt: Date) {
+    await prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        receipt_token_hash: hash,
+        receipt_token_expires_at: expiresAt,
+      },
+    });
+  },
+
   async assignReceiptNumber(paymentId: number): Promise<number> {
     return await prisma.$transaction(async (tx) => {
       const payment = await tx.payment.findUnique({
